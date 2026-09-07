@@ -1,0 +1,124 @@
+// 職員シフト作成サポート - データモデル
+// 出典: 参考資料/職員情報マスター登録の内容について...txt(職員マスタ項目)、
+//       参考資料/シフト作成に関する回答.pdf(残論点)、
+//       docs/decisions/2026-09-07-project-kickoff.md(プロジェクトの位置づけ)
+// 開発初期は SQLite。本番は PostgreSQL への切り替えを想定。
+// AgriCamp・送迎プラン作成サポートのDBとは独立(共有しない)。
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------------------------------------------------------------------------
+// マスタ
+// ---------------------------------------------------------------------------
+
+model Facility {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  staff             Staff[]
+  requiredStaffings RequiredStaffing[]
+  shiftAssignments  ShiftAssignment[]
+}
+
+// 権限設定(職員情報マスター登録項目②)
+enum PermissionLevel {
+  SYSTEM_ADMIN // システム管理者: マスターを含むすべての事項の編集権限
+  ADMIN // 管理者: マスター登録内容は閲覧のみ / シフト情報は編集権限あり
+  PLANNER // 予定作成者: マスターの閲覧・編集権限なし / シフト情報は編集権限あり
+  GENERAL_STAFF // 一般職員: マスターの閲覧権限なし / シフト情報の閲覧のみ
+}
+
+// 職制区分(職員情報マスター登録項目③)
+enum StaffEmploymentType {
+  FULL_TIME_40H // 正社員(週40時間)
+  FULL_TIME_32H // 正社員(週32時間)
+  PART_TIME_WELFARE // パート(福祉職)
+  PART_TIME_DRIVER // パート(運転専従)
+  ARBEIT_TRANSPORT // アルバイト(送迎対象)
+}
+
+// 在籍ステータス(職員情報マスター登録項目④)
+enum EmploymentStatus {
+  ZAISEKI_CHU // 在籍中
+  KYUSHOKU_CHU // 休職中
+  REWORK // リワーク
+  TAISHOKU // 退職
+}
+
+// 運転可能量区分(職員情報マスター登録項目⑤)。
+// 兼務職員の平均的な運転業務量(運転時間)を1としたときの運転量Aの設定ランク。
+enum DrivingCapacityBand {
+  BAND_1 // 1.5 < A < 2.0
+  BAND_2 // 1.2 < A < 1.5
+  BAND_3 // 1.0 < A < 1.3
+  BAND_4 // 0.9 < A < 1.2
+  BAND_5 // 0.8 < A < 1.0
+  BAND_6 // 0.7 < A < 0.9
+  BAND_7 // A < 0.8
+}
+
+model Staff {
+  id                  String              @id @default(cuid())
+  name                String
+  permissionLevel     PermissionLevel     @default(GENERAL_STAFF)
+  employmentType      StaffEmploymentType
+  employmentStatus    EmploymentStatus    @default(ZAISEKI_CHU)
+  drivingCapacityBand DrivingCapacityBand?
+  phoneNumber         String?
+  email               String?
+  // 主な所属事業所(任意。職員は複数事業所を掛け持ちする場合があるため、
+  // シフト割当ごとの事業所はShiftAssignment.facilityIdで個別に記録する)
+  primaryFacilityId   String?
+  primaryFacility     Facility?           @relation(fields: [primaryFacilityId], references: [id])
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  shiftAssignments ShiftAssignment[]
+}
+
+// 必要配置人数マスタ(シフト作成に関する回答.pdf 論点3)。
+// 現時点では曜日ごとの固定人数のみ。当日の利用人数に応じた変動ルールは未実装(今後の検討事項)。
+model RequiredStaffing {
+  id           String   @id @default(cuid())
+  facilityId   String
+  facility     Facility @relation(fields: [facilityId], references: [id])
+  weekday      Int // 0=日曜 ... 6=土曜
+  requiredCount Int
+  note         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([facilityId, weekday])
+}
+
+enum ShiftAssignmentStatus {
+  DRAFT // 下書き
+  CONFIRMED // 確定
+}
+
+// 職員シフト割当。1人・1日・1事業所につき1レコード。
+model ShiftAssignment {
+  id         String                @id @default(cuid())
+  date       DateTime // 対象日(時刻部分は無視し日付のみ扱う)
+  staffId    String
+  staff      Staff                 @relation(fields: [staffId], references: [id])
+  facilityId String
+  facility   Facility              @relation(fields: [facilityId], references: [id])
+  startTime  String // "HH:mm"
+  endTime    String // "HH:mm"
+  status     ShiftAssignmentStatus @default(DRAFT)
+  note       String?
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  @@unique([date, staffId, facilityId])
+}

@@ -1,0 +1,9 @@
+:root {
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #f5f6f8;
+}
