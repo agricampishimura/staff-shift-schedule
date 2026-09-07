@@ -1,0 +1,22 @@
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Staff" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "permissionLevel" TEXT NOT NULL DEFAULT 'GENERAL_STAFF',
+    "employmentType" TEXT,
+    "employmentStatus" TEXT NOT NULL DEFAULT 'ZAISEKI_CHU',
+    "drivingCapacityBand" TEXT,
+    "phoneNumber" TEXT,
+    "email" TEXT,
+    "primaryFacilityId" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Staff_primaryFacilityId_fkey" FOREIGN KEY ("primaryFacilityId") REFERENCES "Facility" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+INSERT INTO "new_Staff" ("createdAt", "drivingCapacityBand", "email", "employmentStatus", "employmentType", "id", "name", "permissionLevel", "phoneNumber", "primaryFacilityId", "updatedAt") SELECT "createdAt", "drivingCapacityBand", "email", "employmentStatus", "employmentType", "id", "name", "permissionLevel", "phoneNumber", "primaryFacilityId", "updatedAt" FROM "Staff";
+DROP TABLE "Staff";
+ALTER TABLE "new_Staff" RENAME TO "Staff";
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;

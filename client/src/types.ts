@@ -7,13 +7,14 @@ export type StaffEmploymentType =
   | "ARBEIT_TRANSPORT";
 export type EmploymentStatus = "ZAISEKI_CHU" | "KYUSHOKU_CHU" | "REWORK" | "TAISHOKU";
 export type DrivingCapacityBand =
-  | "BAND_1"
-  | "BAND_2"
-  | "BAND_3"
-  | "BAND_4"
-  | "BAND_5"
-  | "BAND_6"
-  | "BAND_7";
+  | "BAND_A"
+  | "BAND_B"
+  | "BAND_C"
+  | "BAND_D"
+  | "BAND_E"
+  | "BAND_F"
+  | "BAND_G"
+  | "BAND_H";
 export type ShiftAssignmentStatus = "DRAFT" | "CONFIRMED";
 
 export interface Facility {
@@ -25,7 +26,7 @@ export interface Staff {
   id: string;
   name: string;
   permissionLevel: PermissionLevel;
-  employmentType: StaffEmploymentType;
+  employmentType: StaffEmploymentType | null;
   employmentStatus: EmploymentStatus;
   drivingCapacityBand: DrivingCapacityBand | null;
   phoneNumber: string | null;
@@ -78,13 +79,14 @@ export const EMPLOYMENT_STATUS_LABELS: Record<EmploymentStatus, string> = {
 };
 
 export const DRIVING_CAPACITY_LABELS: Record<DrivingCapacityBand, string> = {
-  BAND_1: "1.5 < A < 2.0",
-  BAND_2: "1.2 < A < 1.5",
-  BAND_3: "1.0 < A < 1.3",
-  BAND_4: "0.9 < A < 1.2",
-  BAND_5: "0.8 < A < 1.0",
-  BAND_6: "0.7 < A < 0.9",
-  BAND_7: "A < 0.8",
+  BAND_A: "A(1.5 < A < 2.0)",
+  BAND_B: "B(1.2 < A < 1.5)",
+  BAND_C: "C(1.0 < A < 1.3)",
+  BAND_D: "D(0.9 < A < 1.2)",
+  BAND_E: "E(0.8 < A < 1.0)",
+  BAND_F: "F(0.7 < A < 0.9)",
+  BAND_G: "G(A < 0.8)",
+  BAND_H: "H(定義未確認)",
 };
 
 export const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];

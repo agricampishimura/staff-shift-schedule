@@ -16,7 +16,7 @@ import {
 const emptyForm = {
   name: "",
   permissionLevel: "GENERAL_STAFF" as PermissionLevel,
-  employmentType: "FULL_TIME_40H" as StaffEmploymentType,
+  employmentType: "" as StaffEmploymentType | "",
   employmentStatus: "ZAISEKI_CHU" as EmploymentStatus,
   drivingCapacityBand: "" as DrivingCapacityBand | "",
   phoneNumber: "",
@@ -43,6 +43,7 @@ export function StaffSection() {
     if (!form.name.trim()) return;
     await api.post("/staff", {
       ...form,
+      employmentType: form.employmentType || null,
       drivingCapacityBand: form.drivingCapacityBand || null,
       primaryFacilityId: form.primaryFacilityId || null,
     });
@@ -79,9 +80,13 @@ export function StaffSection() {
         <select
           value={form.employmentType}
           onChange={(e) =>
-            setForm({ ...form, employmentType: e.target.value as StaffEmploymentType })
+            setForm({
+              ...form,
+              employmentType: e.target.value as StaffEmploymentType | "",
+            })
           }
         >
+          <option value="">職制区分(なし)</option>
           {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([v, label]) => (
             <option key={v} value={v}>
               {label}
@@ -158,7 +163,7 @@ export function StaffSection() {
             <tr key={s.id}>
               <td>{s.name}</td>
               <td>{PERMISSION_LEVEL_LABELS[s.permissionLevel]}</td>
-              <td>{EMPLOYMENT_TYPE_LABELS[s.employmentType]}</td>
+              <td>{s.employmentType ? EMPLOYMENT_TYPE_LABELS[s.employmentType] : "-"}</td>
               <td>{EMPLOYMENT_STATUS_LABELS[s.employmentStatus]}</td>
               <td>{s.drivingCapacityBand ? DRIVING_CAPACITY_LABELS[s.drivingCapacityBand] : "-"}</td>
               <td>{s.primaryFacility?.name ?? "-"}</td>
