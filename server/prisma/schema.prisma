@@ -60,8 +60,7 @@ enum EmploymentStatus {
 // (職員基本情報2026-9.pdf)を取り込んだところ実際の運用はA〜Hの8段階だったため、
 // 実データのアルファベット表記にあわせて修正した。
 // A〜Gの数値範囲は職員情報マスター登録項目のa〜gの定義を踏襲(A=a, ..., G=g)。
-// Hは実データ上ほとんどのアルバイト職員に付与されており、運転業務なし
-// (対象外)を意味すると推測されるが、正式な定義は未確認。
+// H = 運転不可(2026-09-07確定)。
 // 参照: docs/decisions/2026-09-07-driving-capacity-band-real-data.md
 enum DrivingCapacityBand {
   BAND_A // 1.5 < A < 2.0
@@ -71,7 +70,7 @@ enum DrivingCapacityBand {
   BAND_E // 0.8 < A < 1.0
   BAND_F // 0.7 < A < 0.9
   BAND_G // A < 0.8
-  BAND_H // 定義未確認(実データ上は運転業務なしの職員に付与されている可能性が高い)
+  BAND_H // 運転不可
 }
 
 model Staff {

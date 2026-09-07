@@ -86,7 +86,7 @@ export const DRIVING_CAPACITY_LABELS: Record<DrivingCapacityBand, string> = {
   BAND_E: "E(0.8 < A < 1.0)",
   BAND_F: "F(0.7 < A < 0.9)",
   BAND_G: "G(A < 0.8)",
-  BAND_H: "H(定義未確認)",
+  BAND_H: "H(運転不可)",
 };
 
 export const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
