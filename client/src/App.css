@@ -64,3 +64,17 @@ button {
   color: #666;
   font-size: 0.85rem;
 }
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2e7d32;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+tr.editing-row {
+  background: #eef7ee;
+}

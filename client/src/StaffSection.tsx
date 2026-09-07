@@ -24,10 +24,24 @@ const emptyForm = {
   primaryFacilityId: "",
 };
 
+function toForm(s: Staff) {
+  return {
+    name: s.name,
+    permissionLevel: s.permissionLevel,
+    employmentType: s.employmentType ?? ("" as StaffEmploymentType | ""),
+    employmentStatus: s.employmentStatus,
+    drivingCapacityBand: s.drivingCapacityBand ?? ("" as DrivingCapacityBand | ""),
+    phoneNumber: s.phoneNumber ?? "",
+    email: s.email ?? "",
+    primaryFacilityId: s.primaryFacilityId ?? "",
+  };
+}
+
 export function StaffSection() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = () => {
     api.get<Staff[]>("/staff").then(setStaff);
@@ -38,28 +52,45 @@ export function StaffSection() {
     load();
   }, []);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const startEdit = (s: Staff) => {
+    setEditingId(s.id);
+    setForm(toForm(s));
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
-    await api.post("/staff", {
+    const payload = {
       ...form,
       employmentType: form.employmentType || null,
       drivingCapacityBand: form.drivingCapacityBand || null,
       primaryFacilityId: form.primaryFacilityId || null,
-    });
+    };
+    if (editingId) {
+      await api.put(`/staff/${editingId}`, payload);
+      setEditingId(null);
+    } else {
+      await api.post("/staff", payload);
+    }
     setForm(emptyForm);
     load();
   };
 
   const handleDelete = async (id: string) => {
     await api.delete(`/staff/${id}`);
+    if (editingId === id) cancelEdit();
     load();
   };
 
   return (
     <section>
       <h2>職員マスタ</h2>
-      <form onSubmit={handleAdd} className="staff-form">
+      <form onSubmit={handleSubmit} className="staff-form">
         <input
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -142,7 +173,12 @@ export function StaffSection() {
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           placeholder="メールアドレス"
         />
-        <button type="submit">追加</button>
+        <button type="submit">{editingId ? "更新" : "追加"}</button>
+        {editingId && (
+          <button type="button" onClick={cancelEdit}>
+            キャンセル
+          </button>
+        )}
       </form>
       <table>
         <thead>
@@ -160,8 +196,12 @@ export function StaffSection() {
         </thead>
         <tbody>
           {staff.map((s) => (
-            <tr key={s.id}>
-              <td>{s.name}</td>
+            <tr key={s.id} className={editingId === s.id ? "editing-row" : ""}>
+              <td>
+                <button type="button" className="link-button" onClick={() => startEdit(s)}>
+                  {s.name}
+                </button>
+              </td>
               <td>{PERMISSION_LEVEL_LABELS[s.permissionLevel]}</td>
               <td>{s.employmentType ? EMPLOYMENT_TYPE_LABELS[s.employmentType] : "-"}</td>
               <td>{EMPLOYMENT_STATUS_LABELS[s.employmentStatus]}</td>
@@ -170,7 +210,8 @@ export function StaffSection() {
               <td>{s.phoneNumber ?? "-"}</td>
               <td>{s.email ?? "-"}</td>
               <td>
-                <button onClick={() => handleDelete(s.id)}>削除</button>
+                <button type="button" onClick={() => startEdit(s)}>編集</button>
+                <button type="button" onClick={() => handleDelete(s.id)}>削除</button>
               </td>
             </tr>
           ))}
