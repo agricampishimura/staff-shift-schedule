@@ -253,3 +253,146 @@ tr.editing-row {
 .shift-table th.weekend {
   color: #c0392b;
 }
+
+.staff-card-finalized {
+  background: #fff3b0;
+  border-color: #e0c34a;
+}
+
+.staff-card-finalized:hover {
+  background: #ffe98a;
+}
+
+/* 正社員の個別シフト作成画面 */
+.staff-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.staff-editor-header h3 {
+  margin: 0;
+}
+
+.base-time-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.staff-editor-footer {
+  margin-top: 16px;
+}
+
+.staff-editor-footer button {
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.mini-calendar {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 420px;
+}
+
+.mini-calendar th,
+.mini-calendar td {
+  border: 1px solid #e3e6ea;
+  text-align: center;
+  padding: 0;
+}
+
+.mini-calendar th {
+  padding: 4px;
+  font-size: 0.8rem;
+  background: #f7f9fa;
+}
+
+.calendar-cell {
+  width: 56px;
+  height: 48px;
+  vertical-align: top;
+  cursor: pointer;
+}
+
+.calendar-cell:hover {
+  outline: 2px solid #2e7d32;
+  outline-offset: -2px;
+}
+
+.empty-cell {
+  background: #fafafa;
+}
+
+.cell-day {
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  text-align: right;
+}
+
+.cell-code {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2e7d32;
+  padding: 0 4px;
+}
+
+.text-red {
+  color: #c0392b;
+}
+
+.text-blue {
+  color: #2a5db0;
+}
+
+.bg-requested-off {
+  background: #fff3b0;
+}
+
+.bg-paid-leave {
+  background: #fbdce6;
+}
+
+.calendar-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.day-popup {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 20px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.day-popup h4 {
+  margin: 0 0 12px;
+}
+
+.popup-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

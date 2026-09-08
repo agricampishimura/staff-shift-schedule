@@ -93,6 +93,7 @@ model Staff {
 
   shiftAssignments ShiftAssignment[]
   daySchedules     StaffDaySchedule[]
+  scheduleStatuses StaffScheduleStatus[]
 }
 
 // 必要配置人数マスタ(シフト作成に関する回答.pdf 論点3)。
@@ -162,6 +163,13 @@ enum DayScheduleType {
   OFF // 休日
 }
 
+// 休日の種別(dayType=OFFの場合のみ意味を持つ。2026-09-08追加)。
+// 正社員のカレンダー式シフト作成で、希望休と有給を区別して表示するために使う。
+enum OffType {
+  REQUESTED // 希望休(カレンダー上は黄色)
+  PAID_LEAVE // 有給(カレンダー上は薄いピンク)
+}
+
 // 職員1人・1日ごとのシフト設定。
 model StaffDaySchedule {
   id      String          @id @default(cuid())
@@ -169,6 +177,7 @@ model StaffDaySchedule {
   staff   Staff           @relation(fields: [staffId], references: [id])
   date    DateTime // 対象日(時刻部分は無視)
   dayType DayScheduleType @default(WORK)
+  offType OffType? // dayType=OFFのときのみ設定(希望休 or 有給)
 
   // 正社員: 勤務時間区分マスタから選択
   workTimeCategoryId String?
@@ -183,4 +192,19 @@ model StaffDaySchedule {
   updatedAt DateTime @updatedAt
 
   @@unique([staffId, date])
+}
+
+// 職員×対象月ごとの「シフト設定完了」状態(2026-09-08追加)。
+// 正社員のシフト作成画面で「設定終了」を押すとtrueになり、
+// シフト作成トップの名前カードを黄色表示するために使う。
+model StaffScheduleStatus {
+  id          String   @id @default(cuid())
+  staffId     String
+  staff       Staff    @relation(fields: [staffId], references: [id])
+  month       String // "YYYY-MM"
+  isFinalized Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([staffId, month])
 }

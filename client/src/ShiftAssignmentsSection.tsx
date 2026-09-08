@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
+import { FullTimeStaffShiftEditor } from "./FullTimeStaffShiftEditor";
 import { MonthlyShiftTable } from "./MonthlyShiftTable";
 import { StaffDayScheduleModal } from "./StaffDayScheduleModal";
-import type { Staff, WorkTimeCategory } from "./types";
+import type { Staff, StaffScheduleStatus, WorkTimeCategory } from "./types";
 
 function monthOf(base: Date, offset: number) {
   const d = new Date(base.getFullYear(), base.getMonth() + offset, 1);
@@ -45,9 +46,21 @@ const FULL_TIME_TYPES = ["FULL_TIME_40H", "FULL_TIME_32H"];
 const PART_TIME_TYPES = ["PART_TIME_WELFARE", "PART_TIME_DRIVER"];
 const ARBEIT_TYPES = ["ARBEIT_TRANSPORT"];
 
-function StaffCard({ staff, onClick }: { staff: Staff; onClick: () => void }) {
+function StaffCard({
+  staff,
+  finalized,
+  onClick,
+}: {
+  staff: Staff;
+  finalized: boolean;
+  onClick: () => void;
+}) {
   return (
-    <button type="button" className="staff-card staff-card-button" onClick={onClick}>
+    <button
+      type="button"
+      className={`staff-card staff-card-button${finalized ? " staff-card-finalized" : ""}`}
+      onClick={onClick}
+    >
       <div className="staff-card-name">{staff.name}</div>
       {staff.primaryFacility && (
         <div className="staff-card-facility">{staff.primaryFacility.name}</div>
@@ -59,10 +72,12 @@ function StaffCard({ staff, onClick }: { staff: Staff; onClick: () => void }) {
 function RosterColumn({
   title,
   staff,
+  finalizedIds,
   onSelect,
 }: {
   title: string;
   staff: Staff[];
+  finalizedIds: Set<string>;
   onSelect: (s: Staff) => void;
 }) {
   return (
@@ -74,14 +89,19 @@ function RosterColumn({
       <div className="roster-cards">
         {staff.length === 0 && <p className="hint">対象職員なし</p>}
         {staff.map((s) => (
-          <StaffCard key={s.id} staff={s} onClick={() => onSelect(s)} />
+          <StaffCard
+            key={s.id}
+            staff={s}
+            finalized={finalizedIds.has(s.id)}
+            onClick={() => onSelect(s)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-type ViewMode = "roster" | "table" | "history";
+type ViewMode = "roster" | "table" | "history" | "staffDetail";
 
 export function ShiftAssignmentsSection() {
   const { options: monthOptions, defaultValue: defaultMonth } = useMonthOptions();
@@ -93,11 +113,23 @@ export function ShiftAssignmentsSection() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [workTimeCategories, setWorkTimeCategories] = useState<WorkTimeCategory[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [finalizedIds, setFinalizedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     api.get<Staff[]>("/staff").then(setStaff);
     api.get<WorkTimeCategory[]>("/work-time-categories").then(setWorkTimeCategories);
   }, []);
+
+  const loadFinalizedIds = () => {
+    api.get<StaffScheduleStatus[]>(`/staff-schedule-status?month=${month}`).then((list) => {
+      setFinalizedIds(new Set(list.filter((s) => s.isFinalized).map((s) => s.staffId)));
+    });
+  };
+
+  useEffect(() => {
+    if (viewMode === "roster") loadFinalizedIds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, month]);
 
   // シフト作成の対象は在籍中の職員のみ。休職中・リワーク・退職は対象外。
   const activeStaff = staff.filter((s) => s.employmentStatus === "ZAISEKI_CHU");
@@ -110,6 +142,31 @@ export function ShiftAssignmentsSection() {
   const arbeitStaff = activeStaff.filter(
     (s) => s.employmentType && ARBEIT_TYPES.includes(s.employmentType)
   );
+
+  const handleSelectStaff = (s: Staff) => {
+    setSelectedStaff(s);
+    if (s.employmentType && FULL_TIME_TYPES.includes(s.employmentType)) {
+      setViewMode("staffDetail");
+    }
+  };
+
+  const handleBackFromDetail = () => {
+    setSelectedStaff(null);
+    setViewMode("roster");
+  };
+
+  if (viewMode === "staffDetail" && selectedStaff) {
+    return (
+      <section>
+        <FullTimeStaffShiftEditor
+          staff={selectedStaff}
+          month={month}
+          workTimeCategories={workTimeCategories}
+          onBack={handleBackFromDetail}
+        />
+      </section>
+    );
+  }
 
   return (
     <section>
@@ -151,10 +208,21 @@ export function ShiftAssignmentsSection() {
             <RosterColumn
               title="正社員(短時間正社員含む)"
               staff={fullTimeStaff}
-              onSelect={setSelectedStaff}
+              finalizedIds={finalizedIds}
+              onSelect={handleSelectStaff}
             />
-            <RosterColumn title="パート" staff={partTimeStaff} onSelect={setSelectedStaff} />
-            <RosterColumn title="アルバイト" staff={arbeitStaff} onSelect={setSelectedStaff} />
+            <RosterColumn
+              title="パート"
+              staff={partTimeStaff}
+              finalizedIds={finalizedIds}
+              onSelect={handleSelectStaff}
+            />
+            <RosterColumn
+              title="アルバイト"
+              staff={arbeitStaff}
+              finalizedIds={finalizedIds}
+              onSelect={handleSelectStaff}
+            />
           </div>
         </>
       )}
@@ -191,15 +259,17 @@ export function ShiftAssignmentsSection() {
         </>
       )}
 
-      {selectedStaff && (
-        <StaffDayScheduleModal
-          staff={selectedStaff}
-          month={month}
-          workTimeCategories={workTimeCategories}
-          onClose={() => setSelectedStaff(null)}
-          onCategoryCreated={(c) => setWorkTimeCategories((prev) => [...prev, c])}
-        />
-      )}
+      {selectedStaff &&
+        viewMode === "roster" &&
+        !(selectedStaff.employmentType && FULL_TIME_TYPES.includes(selectedStaff.employmentType)) && (
+          <StaffDayScheduleModal
+            staff={selectedStaff}
+            month={month}
+            workTimeCategories={workTimeCategories}
+            onClose={() => setSelectedStaff(null)}
+            onCategoryCreated={(c) => setWorkTimeCategories((prev) => [...prev, c])}
+          />
+        )}
     </section>
   );
 }

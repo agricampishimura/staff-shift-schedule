@@ -31,8 +31,16 @@ daySchedulesRouter.get("/", async (req, res) => {
 
 // PUT /api/day-schedules (upsert): staffId + date で1件を作成/更新
 daySchedulesRouter.put("/", async (req, res) => {
-  const { staffId, date, dayType, workTimeCategoryId, customStartTime, customEndTime, note } =
-    req.body;
+  const {
+    staffId,
+    date,
+    dayType,
+    offType,
+    workTimeCategoryId,
+    customStartTime,
+    customEndTime,
+    note,
+  } = req.body;
 
   const parsedDate = new Date(date);
 
@@ -42,6 +50,7 @@ daySchedulesRouter.put("/", async (req, res) => {
       staffId,
       date: parsedDate,
       dayType,
+      offType: offType || null,
       workTimeCategoryId: workTimeCategoryId || null,
       customStartTime: customStartTime || null,
       customEndTime: customEndTime || null,
@@ -49,6 +58,7 @@ daySchedulesRouter.put("/", async (req, res) => {
     },
     update: {
       dayType,
+      offType: offType || null,
       workTimeCategoryId: workTimeCategoryId || null,
       customStartTime: customStartTime || null,
       customEndTime: customEndTime || null,
