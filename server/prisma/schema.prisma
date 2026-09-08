@@ -92,6 +92,7 @@ model Staff {
   updatedAt           DateTime            @updatedAt
 
   shiftAssignments ShiftAssignment[]
+  daySchedules     StaffDaySchedule[]
 }
 
 // 必要配置人数マスタ(シフト作成に関する回答.pdf 論点3)。
@@ -130,4 +131,56 @@ model ShiftAssignment {
   updatedAt  DateTime              @updatedAt
 
   @@unique([date, staffId, facilityId])
+}
+
+// ---------------------------------------------------------------------------
+// 職員別・日ごとのシフト設定(2026-09-08)
+// 名前カードクリックで開く月次スケジュール編集画面で使用する。
+// 正社員は勤務時間区分(WorkTimeCategory)から選択、パートは任意の時間を入力、
+// アルバイトは出勤/休みのみを管理する(時間設定なし)。
+// ---------------------------------------------------------------------------
+
+// 勤務時間区分マスタ(例: J = 10:00〜19:00、休憩1h/実働8時間)。
+// 正社員のシフト作成で選択肢として使う。今後A〜Iなど順次追加していく想定。
+model WorkTimeCategory {
+  id           String   @id @default(cuid())
+  code         String   @unique // "J" 等、1〜数文字の識別コード
+  label        String // "10:00〜19:00" など画面表示用
+  startTime    String // "HH:mm"
+  endTime      String // "HH:mm"
+  breakMinutes Int
+  workHours    Float // 実働時間(時間)
+  note         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  staffDaySchedules StaffDaySchedule[]
+}
+
+enum DayScheduleType {
+  WORK // 出勤
+  OFF // 休日
+}
+
+// 職員1人・1日ごとのシフト設定。
+model StaffDaySchedule {
+  id      String          @id @default(cuid())
+  staffId String
+  staff   Staff           @relation(fields: [staffId], references: [id])
+  date    DateTime // 対象日(時刻部分は無視)
+  dayType DayScheduleType @default(WORK)
+
+  // 正社員: 勤務時間区分マスタから選択
+  workTimeCategoryId String?
+  workTimeCategory   WorkTimeCategory? @relation(fields: [workTimeCategoryId], references: [id])
+
+  // パート: 任意の時間を直接入力(区分マスタは使わない)
+  customStartTime String? // "HH:mm"
+  customEndTime   String? // "HH:mm"
+
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([staffId, date])
 }

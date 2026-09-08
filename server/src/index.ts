@@ -5,6 +5,8 @@ import { facilitiesRouter } from "./routes/facilities.js";
 import { staffRouter } from "./routes/staff.js";
 import { requiredStaffingRouter } from "./routes/requiredStaffing.js";
 import { shiftAssignmentsRouter } from "./routes/shiftAssignments.js";
+import { workTimeCategoriesRouter } from "./routes/workTimeCategories.js";
+import { daySchedulesRouter } from "./routes/daySchedules.js";
 import { externalRouter } from "./routes/external.js";
 import { apiKeyAuth } from "./middleware/apiKeyAuth.js";
 
@@ -19,6 +21,8 @@ app.use("/api/facilities", facilitiesRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/required-staffing", requiredStaffingRouter);
 app.use("/api/shift-assignments", shiftAssignmentsRouter);
+app.use("/api/work-time-categories", workTimeCategoriesRouter);
+app.use("/api/day-schedules", daySchedulesRouter);
 
 // 外部システム(AgriCamp等)向けAPI。x-api-keyヘッダによる認証が必須。
 app.use("/api/external", apiKeyAuth, externalRouter);

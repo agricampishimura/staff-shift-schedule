@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
-import type { Facility, ShiftAssignment, Staff } from "./types";
+import { MonthlyShiftTable } from "./MonthlyShiftTable";
+import { StaffDayScheduleModal } from "./StaffDayScheduleModal";
+import type { Staff, WorkTimeCategory } from "./types";
 
 function monthOf(base: Date, offset: number) {
   const d = new Date(base.getFullYear(), base.getMonth() + offset, 1);
@@ -27,22 +29,42 @@ function useMonthOptions() {
   }, []);
 }
 
+// 「過去のシフト」で選べる月の一覧(当月より前、直近12ヶ月分)
+function usePastMonthOptions() {
+  return useMemo(() => {
+    const today = new Date();
+    const options = Array.from({ length: 12 }, (_, i) => {
+      const ym = monthOf(today, -1 - i);
+      return { value: monthValue(ym), label: monthLabel(ym) };
+    });
+    return { options, defaultValue: options[0].value };
+  }, []);
+}
+
 const FULL_TIME_TYPES = ["FULL_TIME_40H", "FULL_TIME_32H"];
 const PART_TIME_TYPES = ["PART_TIME_WELFARE", "PART_TIME_DRIVER"];
 const ARBEIT_TYPES = ["ARBEIT_TRANSPORT"];
 
-function StaffCard({ staff }: { staff: Staff }) {
+function StaffCard({ staff, onClick }: { staff: Staff; onClick: () => void }) {
   return (
-    <div className="staff-card">
+    <button type="button" className="staff-card staff-card-button" onClick={onClick}>
       <div className="staff-card-name">{staff.name}</div>
       {staff.primaryFacility && (
         <div className="staff-card-facility">{staff.primaryFacility.name}</div>
       )}
-    </div>
+    </button>
   );
 }
 
-function RosterColumn({ title, staff }: { title: string; staff: Staff[] }) {
+function RosterColumn({
+  title,
+  staff,
+  onSelect,
+}: {
+  title: string;
+  staff: Staff[];
+  onSelect: (s: Staff) => void;
+}) {
   return (
     <div className="roster-column">
       <h3>
@@ -52,61 +74,30 @@ function RosterColumn({ title, staff }: { title: string; staff: Staff[] }) {
       <div className="roster-cards">
         {staff.length === 0 && <p className="hint">対象職員なし</p>}
         {staff.map((s) => (
-          <StaffCard key={s.id} staff={s} />
+          <StaffCard key={s.id} staff={s} onClick={() => onSelect(s)} />
         ))}
       </div>
     </div>
   );
 }
 
+type ViewMode = "roster" | "table" | "history";
+
 export function ShiftAssignmentsSection() {
   const { options: monthOptions, defaultValue: defaultMonth } = useMonthOptions();
-  const [month, setMonth] = useState(defaultMonth);
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
+  const { options: pastMonthOptions, defaultValue: defaultPastMonth } = usePastMonthOptions();
 
-  const [form, setForm] = useState({
-    date: "",
-    staffId: "",
-    facilityId: "",
-    startTime: "09:00",
-    endTime: "18:00",
-  });
+  const [viewMode, setViewMode] = useState<ViewMode>("roster");
+  const [month, setMonth] = useState(defaultMonth);
+  const [historyMonth, setHistoryMonth] = useState(defaultPastMonth);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [workTimeCategories, setWorkTimeCategories] = useState<WorkTimeCategory[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
 
   useEffect(() => {
     api.get<Staff[]>("/staff").then(setStaff);
-    api.get<Facility[]>("/facilities").then(setFacilities);
+    api.get<WorkTimeCategory[]>("/work-time-categories").then(setWorkTimeCategories);
   }, []);
-
-  const load = () => api.get<ShiftAssignment[]>(`/shift-assignments?month=${month}`).then(setAssignments);
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [month]);
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.date || !form.staffId || !form.facilityId) return;
-    await api.post("/shift-assignments", { ...form, status: "DRAFT" });
-    load();
-  };
-
-  const handleDelete = async (id: string) => {
-    await api.delete(`/shift-assignments/${id}`);
-    load();
-  };
-
-  const handleConfirm = async (a: ShiftAssignment) => {
-    await api.put(`/shift-assignments/${a.id}`, {
-      startTime: a.startTime,
-      endTime: a.endTime,
-      status: a.status === "CONFIRMED" ? "DRAFT" : "CONFIRMED",
-      note: a.note,
-    });
-    load();
-  };
 
   // シフト作成の対象は在籍中の職員のみ。休職中・リワーク・退職は対象外。
   const activeStaff = staff.filter((s) => s.employmentStatus === "ZAISEKI_CHU");
@@ -123,95 +114,92 @@ export function ShiftAssignmentsSection() {
   return (
     <section>
       <h2>シフト作成</h2>
-      <label>
-        対象月:{" "}
-        <select value={month} onChange={(e) => setMonth(e.target.value)}>
-          {monthOptions.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </label>
 
-      <div className="staff-roster">
-        <RosterColumn title="正社員(短時間正社員含む)" staff={fullTimeStaff} />
-        <RosterColumn title="パート" staff={partTimeStaff} />
-        <RosterColumn title="アルバイト" staff={arbeitStaff} />
+      <div className="view-mode-buttons">
+        <button
+          type="button"
+          className={viewMode === "table" ? "active" : ""}
+          onClick={() => setViewMode(viewMode === "table" ? "roster" : "table")}
+        >
+          シフト表作成
+        </button>
+        <button
+          type="button"
+          className={viewMode === "history" ? "active" : ""}
+          onClick={() => setViewMode(viewMode === "history" ? "roster" : "history")}
+        >
+          過去のシフト
+        </button>
       </div>
 
-      <form onSubmit={handleAdd} className="staff-form">
-        <input
-          type="date"
-          value={form.date}
-          onChange={(e) => setForm({ ...form, date: e.target.value })}
-        />
-        <select
-          value={form.staffId}
-          onChange={(e) => setForm({ ...form, staffId: e.target.value })}
-        >
-          <option value="">職員を選択</option>
-          {staff.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={form.facilityId}
-          onChange={(e) => setForm({ ...form, facilityId: e.target.value })}
-        >
-          <option value="">事業所を選択</option>
-          {facilities.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="time"
-          value={form.startTime}
-          onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-        />
-        <input
-          type="time"
-          value={form.endTime}
-          onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-        />
-        <button type="submit">割当を追加</button>
-      </form>
+      {viewMode === "roster" && (
+        <>
+          <label>
+            対象月:{" "}
+            <select value={month} onChange={(e) => setMonth(e.target.value)}>
+              {monthOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <table>
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>職員</th>
-            <th>事業所</th>
-            <th>時間</th>
-            <th>状態</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {assignments.map((a) => (
-            <tr key={a.id}>
-              <td>{a.date.slice(0, 10)}</td>
-              <td>{a.staff?.name}</td>
-              <td>{a.facility?.name}</td>
-              <td>
-                {a.startTime}〜{a.endTime}
-              </td>
-              <td>{a.status === "CONFIRMED" ? "確定" : "下書き"}</td>
-              <td>
-                <button onClick={() => handleConfirm(a)}>
-                  {a.status === "CONFIRMED" ? "下書きに戻す" : "確定"}
-                </button>
-                <button onClick={() => handleDelete(a.id)}>削除</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <p className="hint">名前カードをクリックすると、その職員の月間シフトを設定できます。</p>
+
+          <div className="staff-roster">
+            <RosterColumn
+              title="正社員(短時間正社員含む)"
+              staff={fullTimeStaff}
+              onSelect={setSelectedStaff}
+            />
+            <RosterColumn title="パート" staff={partTimeStaff} onSelect={setSelectedStaff} />
+            <RosterColumn title="アルバイト" staff={arbeitStaff} onSelect={setSelectedStaff} />
+          </div>
+        </>
+      )}
+
+      {viewMode === "table" && (
+        <>
+          <label>
+            対象月:{" "}
+            <select value={month} onChange={(e) => setMonth(e.target.value)}>
+              {monthOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <MonthlyShiftTable month={month} />
+        </>
+      )}
+
+      {viewMode === "history" && (
+        <>
+          <label>
+            対象月:{" "}
+            <select value={historyMonth} onChange={(e) => setHistoryMonth(e.target.value)}>
+              {pastMonthOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <MonthlyShiftTable month={historyMonth} />
+        </>
+      )}
+
+      {selectedStaff && (
+        <StaffDayScheduleModal
+          staff={selectedStaff}
+          month={month}
+          workTimeCategories={workTimeCategories}
+          onClose={() => setSelectedStaff(null)}
+          onCategoryCreated={(c) => setWorkTimeCategories((prev) => [...prev, c])}
+        />
+      )}
     </section>
   );
 }

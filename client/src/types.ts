@@ -90,3 +90,28 @@ export const DRIVING_CAPACITY_LABELS: Record<DrivingCapacityBand, string> = {
 };
 
 export const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
+
+export type DayScheduleType = "WORK" | "OFF";
+
+export interface WorkTimeCategory {
+  id: string;
+  code: string;
+  label: string;
+  startTime: string;
+  endTime: string;
+  breakMinutes: number;
+  workHours: number;
+  note: string | null;
+}
+
+export interface StaffDaySchedule {
+  id: string;
+  staffId: string;
+  date: string;
+  dayType: DayScheduleType;
+  workTimeCategoryId: string | null;
+  workTimeCategory?: WorkTimeCategory | null;
+  customStartTime: string | null;
+  customEndTime: string | null;
+  note: string | null;
+}
