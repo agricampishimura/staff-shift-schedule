@@ -196,7 +196,23 @@ model StaffDaySchedule {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // 運転専従パートの中抜け勤務(2026-09-09追加)。1日に複数の出退勤ブロックを持つ。
+  timeBlocks StaffDayTimeBlock[]
+
   @@unique([staffId, date])
+}
+
+// 運転専従パートの出退勤ブロック(中抜け勤務: 1日のうちに複数回の出勤・退勤がある)。
+// 例: 7:00〜8:30 / 12:00〜15:30 / 17:00〜18:00 の3ブロック。
+// カレンダー・シフト表では記号「U」で表し、実働時間の合計を別途計算して表示する。
+model StaffDayTimeBlock {
+  id                 String           @id @default(cuid())
+  staffDayScheduleId String
+  staffDaySchedule   StaffDaySchedule @relation(fields: [staffDayScheduleId], references: [id], onDelete: Cascade)
+  startTime          String // "HH:mm"
+  endTime            String // "HH:mm"
+  sortOrder          Int              @default(0)
+  createdAt          DateTime         @default(now())
 }
 
 // 職員×対象月ごとの「シフト設定完了」状態(2026-09-08追加、2026-09-09改訂)。

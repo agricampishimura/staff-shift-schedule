@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
+import { DriverStaffShiftEditor } from "./DriverStaffShiftEditor";
 import { FullTimeStaffShiftEditor } from "./FullTimeStaffShiftEditor";
 import { MonthlyShiftTable } from "./MonthlyShiftTable";
 import { PartTimeStaffShiftEditor } from "./PartTimeStaffShiftEditor";
@@ -163,6 +164,7 @@ export function ShiftAssignmentsSection() {
   if (viewMode === "staffDetail" && selectedStaff) {
     const isFullTime =
       selectedStaff.employmentType && FULL_TIME_TYPES.includes(selectedStaff.employmentType);
+    const isDriver = selectedStaff.employmentType === "PART_TIME_DRIVER";
     return (
       <section>
         {isFullTime ? (
@@ -172,6 +174,8 @@ export function ShiftAssignmentsSection() {
             workTimeCategories={workTimeCategories}
             onBack={handleBackFromDetail}
           />
+        ) : isDriver ? (
+          <DriverStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
         ) : (
           <PartTimeStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
         )}

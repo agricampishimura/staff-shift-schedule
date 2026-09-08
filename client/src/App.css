@@ -416,3 +416,20 @@ tr.editing-row {
   gap: 8px;
   justify-content: center;
 }
+
+.base-time-selector-block {
+  display: block;
+}
+
+.time-block-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.time-block-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

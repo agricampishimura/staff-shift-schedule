@@ -105,6 +105,12 @@ export interface WorkTimeCategory {
   note: string | null;
 }
 
+export interface StaffDayTimeBlock {
+  id: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface StaffDaySchedule {
   id: string;
   staffId: string;
@@ -116,6 +122,7 @@ export interface StaffDaySchedule {
   customStartTime: string | null;
   customEndTime: string | null;
   isOverride: boolean;
+  timeBlocks: StaffDayTimeBlock[];
   note: string | null;
 }
 
