@@ -10,6 +10,7 @@ cd server
 cp .env.example .env
 npm install
 npx prisma migrate dev
+npx prisma db seed   # 勤務時間区分マスタ(A〜J)の初期データ投入
 npm run dev
 
 # client(別ターミナル)

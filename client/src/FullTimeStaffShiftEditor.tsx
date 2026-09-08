@@ -38,7 +38,9 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
   const [schedules, setSchedules] = useState<Record<string, StaffDaySchedule>>({});
   const [baseCategoryId, setBaseCategoryId] = useState("");
   const [popupDate, setPopupDate] = useState<string | null>(null);
-  const [popupStage, setPopupStage] = useState<"choices" | "timeList">("choices");
+  const [popupStage, setPopupStage] = useState<"choices" | "timeList" | "customTime">("choices");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
   const load = () => {
     api
@@ -61,6 +63,8 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
       dayType: "WORK" | "OFF";
       offType?: OffType | null;
       workTimeCategoryId?: string | null;
+      customStartTime?: string | null;
+      customEndTime?: string | null;
     }
   ) => {
     const updated = await api.put<StaffDaySchedule>("/day-schedules", {
@@ -69,6 +73,8 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
       dayType: patch.dayType,
       offType: patch.offType ?? null,
       workTimeCategoryId: patch.workTimeCategoryId ?? null,
+      customStartTime: patch.customStartTime ?? null,
+      customEndTime: patch.customEndTime ?? null,
     });
     setSchedules((prev) => ({ ...prev, [dateValue]: updated }));
   };
@@ -76,6 +82,8 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
   const openPopup = (dateValue: string) => {
     setPopupDate(dateValue);
     setPopupStage("choices");
+    setCustomStart("");
+    setCustomEnd("");
   };
   const closePopup = () => setPopupDate(null);
 
@@ -86,6 +94,17 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
 
   const handleTimeChange = async (dateValue: string, categoryId: string) => {
     await saveDay(dateValue, { dayType: "WORK", workTimeCategoryId: categoryId });
+    closePopup();
+  };
+
+  const handleCustomTimeSave = async (dateValue: string) => {
+    if (!customStart || !customEnd) return;
+    await saveDay(dateValue, {
+      dayType: "WORK",
+      workTimeCategoryId: null,
+      customStartTime: customStart,
+      customEndTime: customEnd,
+    });
     closePopup();
   };
 
@@ -181,6 +200,14 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
                     {schedule?.dayType === "WORK" && schedule.workTimeCategory && (
                       <div className="cell-code">{schedule.workTimeCategory.code}</div>
                     )}
+                    {schedule?.dayType === "WORK" &&
+                      !schedule.workTimeCategory &&
+                      schedule.customStartTime &&
+                      schedule.customEndTime && (
+                        <div className="cell-code" title={`${schedule.customStartTime}〜${schedule.customEndTime}`}>
+                          ▲
+                        </div>
+                      )}
                   </td>
                 );
               })}
@@ -239,7 +266,37 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
                     {c.code}: {c.label}
                   </button>
                 ))}
+                <button type="button" onClick={() => setPopupStage("customTime")}>
+                  ▲: 任意設定(時間を入力)
+                </button>
                 <button type="button" onClick={() => setPopupStage("choices")}>
+                  戻る
+                </button>
+              </div>
+            )}
+            {popupStage === "customTime" && (
+              <div className="popup-choices">
+                <div className="custom-time-inputs">
+                  <input
+                    type="time"
+                    value={customStart}
+                    onChange={(e) => setCustomStart(e.target.value)}
+                  />
+                  <span>〜</span>
+                  <input
+                    type="time"
+                    value={customEnd}
+                    onChange={(e) => setCustomEnd(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCustomTimeSave(popupDate)}
+                  disabled={!customStart || !customEnd}
+                >
+                  この時間で設定
+                </button>
+                <button type="button" onClick={() => setPopupStage("timeList")}>
                   戻る
                 </button>
               </div>
