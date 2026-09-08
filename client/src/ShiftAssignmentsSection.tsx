@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
+import { ArbeitStaffShiftEditor } from "./ArbeitStaffShiftEditor";
 import { DriverStaffShiftEditor } from "./DriverStaffShiftEditor";
 import { FullTimeStaffShiftEditor } from "./FullTimeStaffShiftEditor";
 import { MonthlyShiftTable } from "./MonthlyShiftTable";
 import { PartTimeStaffShiftEditor } from "./PartTimeStaffShiftEditor";
-import { StaffDayScheduleModal } from "./StaffDayScheduleModal";
 import type { Staff, StaffScheduleStatus, WorkTimeCategory } from "./types";
 
 function monthOf(base: Date, offset: number) {
@@ -148,12 +148,7 @@ export function ShiftAssignmentsSection() {
 
   const handleSelectStaff = (s: Staff) => {
     setSelectedStaff(s);
-    if (
-      s.employmentType &&
-      (FULL_TIME_TYPES.includes(s.employmentType) || PART_TIME_TYPES.includes(s.employmentType))
-    ) {
-      setViewMode("staffDetail");
-    }
+    setViewMode("staffDetail");
   };
 
   const handleBackFromDetail = () => {
@@ -165,6 +160,7 @@ export function ShiftAssignmentsSection() {
     const isFullTime =
       selectedStaff.employmentType && FULL_TIME_TYPES.includes(selectedStaff.employmentType);
     const isDriver = selectedStaff.employmentType === "PART_TIME_DRIVER";
+    const isArbeit = selectedStaff.employmentType === "ARBEIT_TRANSPORT";
     return (
       <section>
         {isFullTime ? (
@@ -176,6 +172,8 @@ export function ShiftAssignmentsSection() {
           />
         ) : isDriver ? (
           <DriverStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
+        ) : isArbeit ? (
+          <ArbeitStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
         ) : (
           <PartTimeStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
         )}
@@ -274,16 +272,6 @@ export function ShiftAssignmentsSection() {
         </>
       )}
 
-      {selectedStaff &&
-        viewMode === "roster" &&
-        selectedStaff.employmentType &&
-        ARBEIT_TYPES.includes(selectedStaff.employmentType) && (
-          <StaffDayScheduleModal
-            staff={selectedStaff}
-            month={month}
-            onClose={() => setSelectedStaff(null)}
-          />
-        )}
     </section>
   );
 }

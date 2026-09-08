@@ -11,11 +11,16 @@ function daysInMonth(month: string) {
   });
 }
 
-// 運転専従パートは中抜け勤務の記号「U」(表示欄が小さいため時間数は表示しない)、
-// パート(福祉職)は基本の出勤時間=①/個別変更=②、正社員の任意設定は▲、
-// それ以外は〇(アルバイトの出勤等)で表記する。
+// アルバイトは出勤可能日=可/出勤確定=出、運転専従パートは中抜け勤務の記号「U」
+// (表示欄が小さいため時間数は表示しない)、パート(福祉職)は基本の出勤時間=①/
+// 個別変更=②、正社員の任意設定は▲、それ以外は〇で表記する。
 function cellLabel(s: StaffDaySchedule | undefined, employmentType: StaffEmploymentType | null) {
   if (!s) return "";
+  if (employmentType === "ARBEIT_TRANSPORT") {
+    if (s.arbeitStatus === "CONFIRMED") return "出";
+    if (s.arbeitStatus === "AVAILABLE") return "可";
+    return "";
+  }
   if (s.dayType === "OFF") return "休";
   if (employmentType === "PART_TIME_DRIVER") {
     return s.timeBlocks.length > 0 ? "U" : "";

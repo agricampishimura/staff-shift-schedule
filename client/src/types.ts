@@ -93,6 +93,7 @@ export const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
 export type DayScheduleType = "WORK" | "OFF";
 export type OffType = "REQUESTED" | "PAID_LEAVE";
+export type ArbeitAvailability = "AVAILABLE" | "CONFIRMED";
 
 export interface WorkTimeCategory {
   id: string;
@@ -123,6 +124,7 @@ export interface StaffDaySchedule {
   customEndTime: string | null;
   isOverride: boolean;
   timeBlocks: StaffDayTimeBlock[];
+  arbeitStatus: ArbeitAvailability | null;
   note: string | null;
 }
 
