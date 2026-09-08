@@ -78,3 +78,58 @@ button {
 tr.editing-row {
   background: #eef7ee;
 }
+
+.staff-roster {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.roster-column {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.roster-column h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.roster-count {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.roster-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.staff-card {
+  background: #f3faf3;
+  border: 1px solid #cfe6cf;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  min-width: 90px;
+}
+
+.staff-card-name {
+  font-weight: 600;
+}
+
+.staff-card-facility {
+  color: #666;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
