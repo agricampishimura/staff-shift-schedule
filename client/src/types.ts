@@ -115,6 +115,7 @@ export interface StaffDaySchedule {
   workTimeCategory?: WorkTimeCategory | null;
   customStartTime: string | null;
   customEndTime: string | null;
+  isOverride: boolean;
   note: string | null;
 }
 

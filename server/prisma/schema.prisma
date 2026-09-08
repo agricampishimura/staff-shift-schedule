@@ -183,9 +183,14 @@ model StaffDaySchedule {
   workTimeCategoryId String?
   workTimeCategory   WorkTimeCategory? @relation(fields: [workTimeCategoryId], references: [id])
 
-  // パート: 任意の時間を直接入力(区分マスタは使わない)
+  // パート・正社員の任意設定: 任意の時間を直接入力(区分マスタは使わない)
   customStartTime String? // "HH:mm"
   customEndTime   String? // "HH:mm"
+
+  // パートのカレンダー式シフト作成でのみ使用(2026-09-09追加)。
+  // false: 「出勤時間の設定」で一括適用した基本の出勤時間(カレンダー表示は①)
+  // true : その日だけ個別に変更した出勤時間(カレンダー表示は②)
+  isOverride Boolean @default(false)
 
   note      String?
   createdAt DateTime @default(now())

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import { WEEKDAY_LABELS, type Staff, type StaffDaySchedule } from "./types";
+import { WEEKDAY_LABELS, type Staff, type StaffDaySchedule, type StaffEmploymentType } from "./types";
+
+const PART_TIME_TYPES: StaffEmploymentType[] = ["PART_TIME_WELFARE", "PART_TIME_DRIVER"];
 
 function daysInMonth(month: string) {
   const [year, mon] = month.split("-").map(Number);
@@ -11,12 +13,16 @@ function daysInMonth(month: string) {
   });
 }
 
-function cellLabel(s: StaffDaySchedule | undefined) {
+// パートは基本の出勤時間=①/個別変更=②、正社員の任意設定は▲、それ以外は〇(アルバイトの出勤等)で表記する。
+function cellLabel(s: StaffDaySchedule | undefined, employmentType: StaffEmploymentType | null) {
   if (!s) return "";
   if (s.dayType === "OFF") return "休";
   if (s.workTimeCategory) return s.workTimeCategory.code;
   if (s.customStartTime && s.customEndTime) {
-    return `${s.customStartTime}〜${s.customEndTime}`;
+    if (employmentType && PART_TIME_TYPES.includes(employmentType)) {
+      return s.isOverride ? "②" : "①";
+    }
+    return "▲";
   }
   return "〇";
 }
@@ -66,7 +72,7 @@ export function MonthlyShiftTable({ month }: { month: string }) {
               {days.map((d) => {
                 const dateValue = `${month}-${String(d.day).padStart(2, "0")}`;
                 const entry = byStaffAndDate.get(`${s.id}_${dateValue}`);
-                return <td key={d.day}>{cellLabel(entry)}</td>;
+                return <td key={d.day}>{cellLabel(entry, s.employmentType)}</td>;
               })}
             </tr>
           ))}

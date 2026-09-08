@@ -39,6 +39,7 @@ daySchedulesRouter.put("/", async (req, res) => {
     workTimeCategoryId,
     customStartTime,
     customEndTime,
+    isOverride,
     note,
   } = req.body;
 
@@ -54,6 +55,7 @@ daySchedulesRouter.put("/", async (req, res) => {
       workTimeCategoryId: workTimeCategoryId || null,
       customStartTime: customStartTime || null,
       customEndTime: customEndTime || null,
+      isOverride: isOverride ?? false,
       note: note || null,
     },
     update: {
@@ -62,6 +64,7 @@ daySchedulesRouter.put("/", async (req, res) => {
       workTimeCategoryId: workTimeCategoryId || null,
       customStartTime: customStartTime || null,
       customEndTime: customEndTime || null,
+      isOverride: isOverride ?? false,
       note: note || null,
     },
     include: { workTimeCategory: true },

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import { FullTimeStaffShiftEditor } from "./FullTimeStaffShiftEditor";
 import { MonthlyShiftTable } from "./MonthlyShiftTable";
+import { PartTimeStaffShiftEditor } from "./PartTimeStaffShiftEditor";
 import { StaffDayScheduleModal } from "./StaffDayScheduleModal";
 import type { Staff, StaffScheduleStatus, WorkTimeCategory } from "./types";
 
@@ -146,7 +147,10 @@ export function ShiftAssignmentsSection() {
 
   const handleSelectStaff = (s: Staff) => {
     setSelectedStaff(s);
-    if (s.employmentType && FULL_TIME_TYPES.includes(s.employmentType)) {
+    if (
+      s.employmentType &&
+      (FULL_TIME_TYPES.includes(s.employmentType) || PART_TIME_TYPES.includes(s.employmentType))
+    ) {
       setViewMode("staffDetail");
     }
   };
@@ -157,14 +161,20 @@ export function ShiftAssignmentsSection() {
   };
 
   if (viewMode === "staffDetail" && selectedStaff) {
+    const isFullTime =
+      selectedStaff.employmentType && FULL_TIME_TYPES.includes(selectedStaff.employmentType);
     return (
       <section>
-        <FullTimeStaffShiftEditor
-          staff={selectedStaff}
-          month={month}
-          workTimeCategories={workTimeCategories}
-          onBack={handleBackFromDetail}
-        />
+        {isFullTime ? (
+          <FullTimeStaffShiftEditor
+            staff={selectedStaff}
+            month={month}
+            workTimeCategories={workTimeCategories}
+            onBack={handleBackFromDetail}
+          />
+        ) : (
+          <PartTimeStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
+        )}
       </section>
     );
   }
@@ -262,13 +272,12 @@ export function ShiftAssignmentsSection() {
 
       {selectedStaff &&
         viewMode === "roster" &&
-        !(selectedStaff.employmentType && FULL_TIME_TYPES.includes(selectedStaff.employmentType)) && (
+        selectedStaff.employmentType &&
+        ARBEIT_TYPES.includes(selectedStaff.employmentType) && (
           <StaffDayScheduleModal
             staff={selectedStaff}
             month={month}
-            workTimeCategories={workTimeCategories}
             onClose={() => setSelectedStaff(null)}
-            onCategoryCreated={(c) => setWorkTimeCategories((prev) => [...prev, c])}
           />
         )}
     </section>
