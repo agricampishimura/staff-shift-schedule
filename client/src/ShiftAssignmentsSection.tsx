@@ -48,19 +48,21 @@ const ARBEIT_TYPES = ["ARBEIT_TRANSPORT"];
 
 function StaffCard({
   staff,
-  finalized,
+  status,
   onClick,
 }: {
   staff: Staff;
-  finalized: boolean;
+  status: "none" | "complete" | "incomplete";
   onClick: () => void;
 }) {
+  const statusClass =
+    status === "complete"
+      ? " staff-card-finalized"
+      : status === "incomplete"
+        ? " staff-card-incomplete"
+        : "";
   return (
-    <button
-      type="button"
-      className={`staff-card staff-card-button${finalized ? " staff-card-finalized" : ""}`}
-      onClick={onClick}
-    >
+    <button type="button" className={`staff-card staff-card-button${statusClass}`} onClick={onClick}>
       <div className="staff-card-name">{staff.name}</div>
       {staff.primaryFacility && (
         <div className="staff-card-facility">{staff.primaryFacility.name}</div>
@@ -72,12 +74,12 @@ function StaffCard({
 function RosterColumn({
   title,
   staff,
-  finalizedIds,
+  statusMap,
   onSelect,
 }: {
   title: string;
   staff: Staff[];
-  finalizedIds: Set<string>;
+  statusMap: Map<string, boolean>;
   onSelect: (s: Staff) => void;
 }) {
   return (
@@ -88,14 +90,11 @@ function RosterColumn({
       </h3>
       <div className="roster-cards">
         {staff.length === 0 && <p className="hint">対象職員なし</p>}
-        {staff.map((s) => (
-          <StaffCard
-            key={s.id}
-            staff={s}
-            finalized={finalizedIds.has(s.id)}
-            onClick={() => onSelect(s)}
-          />
-        ))}
+        {staff.map((s) => {
+          const isComplete = statusMap.get(s.id);
+          const status = isComplete === undefined ? "none" : isComplete ? "complete" : "incomplete";
+          return <StaffCard key={s.id} staff={s} status={status} onClick={() => onSelect(s)} />;
+        })}
       </div>
     </div>
   );
@@ -113,21 +112,23 @@ export function ShiftAssignmentsSection() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [workTimeCategories, setWorkTimeCategories] = useState<WorkTimeCategory[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
-  const [finalizedIds, setFinalizedIds] = useState<Set<string>>(new Set());
+  const [statusMap, setStatusMap] = useState<Map<string, boolean>>(new Map());
 
   useEffect(() => {
     api.get<Staff[]>("/staff").then(setStaff);
     api.get<WorkTimeCategory[]>("/work-time-categories").then(setWorkTimeCategories);
   }, []);
 
-  const loadFinalizedIds = () => {
+  const loadStatusMap = () => {
     api.get<StaffScheduleStatus[]>(`/staff-schedule-status?month=${month}`).then((list) => {
-      setFinalizedIds(new Set(list.filter((s) => s.isFinalized).map((s) => s.staffId)));
+      setStatusMap(
+        new Map(list.filter((s) => s.isFinalized).map((s) => [s.staffId, s.isComplete]))
+      );
     });
   };
 
   useEffect(() => {
-    if (viewMode === "roster") loadFinalizedIds();
+    if (viewMode === "roster") loadStatusMap();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, month]);
 
@@ -208,19 +209,19 @@ export function ShiftAssignmentsSection() {
             <RosterColumn
               title="正社員(短時間正社員含む)"
               staff={fullTimeStaff}
-              finalizedIds={finalizedIds}
+              statusMap={statusMap}
               onSelect={handleSelectStaff}
             />
             <RosterColumn
               title="パート"
               staff={partTimeStaff}
-              finalizedIds={finalizedIds}
+              statusMap={statusMap}
               onSelect={handleSelectStaff}
             />
             <RosterColumn
               title="アルバイト"
               staff={arbeitStaff}
-              finalizedIds={finalizedIds}
+              statusMap={statusMap}
               onSelect={handleSelectStaff}
             />
           </div>

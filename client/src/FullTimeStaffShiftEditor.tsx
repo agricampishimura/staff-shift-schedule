@@ -131,8 +131,28 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
     load();
   };
 
+  const isAllDaysSet = () => {
+    const daysCount = new Date(year, mon, 0).getDate();
+    for (let d = 1; d <= daysCount; d++) {
+      const dateValue = `${month}-${String(d).padStart(2, "0")}`;
+      if (!schedules[dateValue]) return false;
+    }
+    return true;
+  };
+
   const handleFinish = async () => {
-    await api.put("/staff-schedule-status", { staffId: staff.id, month, isFinalized: true });
+    const isComplete = isAllDaysSet();
+    await api.put("/staff-schedule-status", {
+      staffId: staff.id,
+      month,
+      isFinalized: true,
+      isComplete,
+    });
+    if (!isComplete) {
+      window.alert(
+        "すべての日に休日設定または勤務時間設定が行われていません。シフト作成トップでは「作成途中」として赤色で表示されます。"
+      );
+    }
     onBack();
   };
 

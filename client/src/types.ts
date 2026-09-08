@@ -123,4 +123,5 @@ export interface StaffScheduleStatus {
   staffId: string;
   month: string;
   isFinalized: boolean;
+  isComplete: boolean;
 }

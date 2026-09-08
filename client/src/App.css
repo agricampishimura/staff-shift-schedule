@@ -263,6 +263,15 @@ tr.editing-row {
   background: #ffe98a;
 }
 
+.staff-card-incomplete {
+  background: #fbdcdc;
+  border-color: #e08a8a;
+}
+
+.staff-card-incomplete:hover {
+  background: #f8c4c4;
+}
+
 /* 正社員の個別シフト作成画面 */
 .staff-editor-header {
   display: flex;

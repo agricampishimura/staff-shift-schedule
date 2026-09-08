@@ -18,11 +18,11 @@ staffScheduleStatusRouter.get("/", async (req, res) => {
 
 // PUT /api/staff-schedule-status (upsert): staffId + month で1件を作成/更新
 staffScheduleStatusRouter.put("/", async (req, res) => {
-  const { staffId, month, isFinalized } = req.body;
+  const { staffId, month, isFinalized, isComplete } = req.body;
   const status = await prisma.staffScheduleStatus.upsert({
     where: { staffId_month: { staffId, month } },
-    create: { staffId, month, isFinalized },
-    update: { isFinalized },
+    create: { staffId, month, isFinalized, isComplete },
+    update: { isFinalized, isComplete },
   });
   res.json(status);
 });

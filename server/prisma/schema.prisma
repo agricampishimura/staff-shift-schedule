@@ -194,15 +194,19 @@ model StaffDaySchedule {
   @@unique([staffId, date])
 }
 
-// 職員×対象月ごとの「シフト設定完了」状態(2026-09-08追加)。
-// 正社員のシフト作成画面で「設定終了」を押すとtrueになり、
-// シフト作成トップの名前カードを黄色表示するために使う。
+// 職員×対象月ごとの「シフト設定完了」状態(2026-09-08追加、2026-09-09改訂)。
+// 正社員のシフト作成画面で「設定終了」を押すとレコードが作成/更新される。
+// isFinalized: 「設定終了」が一度でも押されたか(レコードが存在する = true)。
+// isComplete: 押された時点で、対象月の全日に休日設定または勤務時間設定が
+//   済んでいたか。trueならシフト作成トップの名前カードを黄色(完了)、
+//   falseなら赤(作成途中)で表示する。
 model StaffScheduleStatus {
   id          String   @id @default(cuid())
   staffId     String
   staff       Staff    @relation(fields: [staffId], references: [id])
   month       String // "YYYY-MM"
   isFinalized Boolean  @default(false)
+  isComplete  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
