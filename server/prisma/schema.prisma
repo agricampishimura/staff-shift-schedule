@@ -18,9 +18,27 @@ generator client {
 // マスタ
 // ---------------------------------------------------------------------------
 
+// サービス内容(2026-09-09追加)。事業所ごとの通常開所時間の管理方法が異なる。
+enum ServiceType {
+  EMPLOYMENT_TYPE_B // 就労B型
+  AFTER_SCHOOL_DAY_SERVICE // 放課後等デイサービス
+}
+
 model Facility {
-  id        String   @id @default(cuid())
-  name      String
+  id          String       @id @default(cuid())
+  name        String
+  serviceType ServiceType?
+
+  // 通常開所時間(就労B型: 学校開校日/休校日の区別なく単一の開所時間を使う)
+  openTime  String? // "HH:mm"
+  closeTime String? // "HH:mm"
+
+  // 放課後等デイサービス専用: 学校開校日/学校休校日で開所時間が異なるため別々に持つ
+  schoolDayOpenTime     String? // "HH:mm"(学校開校日の開始)
+  schoolDayCloseTime    String? // "HH:mm"(学校開校日の終了)
+  schoolOffDayOpenTime  String? // "HH:mm"(学校休校日の開始)
+  schoolOffDayCloseTime String? // "HH:mm"(学校休校日の終了)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

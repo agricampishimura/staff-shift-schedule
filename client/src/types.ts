@@ -16,11 +16,24 @@ export type DrivingCapacityBand =
   | "BAND_G"
   | "BAND_H";
 export type ShiftAssignmentStatus = "DRAFT" | "CONFIRMED";
+export type ServiceType = "EMPLOYMENT_TYPE_B" | "AFTER_SCHOOL_DAY_SERVICE";
 
 export interface Facility {
   id: string;
   name: string;
+  serviceType: ServiceType | null;
+  openTime: string | null;
+  closeTime: string | null;
+  schoolDayOpenTime: string | null;
+  schoolDayCloseTime: string | null;
+  schoolOffDayOpenTime: string | null;
+  schoolOffDayCloseTime: string | null;
 }
+
+export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
+  EMPLOYMENT_TYPE_B: "就労B型",
+  AFTER_SCHOOL_DAY_SERVICE: "放課後等デイサービス",
+};
 
 export interface Staff {
   id: string;

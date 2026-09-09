@@ -261,6 +261,16 @@ tr.inline-edit-row .staff-form {
   font-size: 0.9rem;
 }
 
+.hours-fieldset {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  background: #f7f9fa;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
 /* シフト表(シフト表作成・過去のシフト) */
 .shift-table-wrapper {
   overflow-x: auto;
