@@ -30,6 +30,27 @@
   font-weight: 600;
 }
 
+.app-subnav {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.app-subnav button {
+  padding: 6px 12px;
+  border: 1px solid #d9dde3;
+  background: #fff;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.app-subnav button.active {
+  background: #2e7d32;
+  color: #fff;
+  border-color: #2e7d32;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
