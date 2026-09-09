@@ -8,6 +8,8 @@ export function RequiredStaffingSection() {
   const [required, setRequired] = useState<RequiredStaffing[]>([]);
   const [weekday, setWeekday] = useState(1);
   const [requiredCount, setRequiredCount] = useState(1);
+  const [severeBehaviorAdditionCount, setSevereBehaviorAdditionCount] = useState(0);
+  const [instructorAdditionCount, setInstructorAdditionCount] = useState(0);
 
   useEffect(() => {
     api.get<Facility[]>("/facilities").then((fs) => {
@@ -25,10 +27,19 @@ export function RequiredStaffingSection() {
     load(facilityId);
   }, [facilityId]);
 
+  const selectedFacility = facilities.find((f) => f.id === facilityId);
+  const isDayService = selectedFacility?.serviceType === "AFTER_SCHOOL_DAY_SERVICE";
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!facilityId) return;
-    await api.post("/required-staffing", { facilityId, weekday, requiredCount });
+    await api.post("/required-staffing", {
+      facilityId,
+      weekday,
+      requiredCount,
+      severeBehaviorAdditionCount: isDayService ? severeBehaviorAdditionCount : null,
+      instructorAdditionCount: isDayService ? instructorAdditionCount : null,
+    });
     load(facilityId);
   };
 
@@ -58,12 +69,37 @@ export function RequiredStaffingSection() {
             </option>
           ))}
         </select>
-        <input
-          type="number"
-          min={0}
-          value={requiredCount}
-          onChange={(e) => setRequiredCount(Number(e.target.value))}
-        />
+        <label className="checkbox-label">
+          必要人数:
+          <input
+            type="number"
+            min={0}
+            value={requiredCount}
+            onChange={(e) => setRequiredCount(Number(e.target.value))}
+          />
+        </label>
+        {isDayService && (
+          <>
+            <label className="checkbox-label">
+              加算算定(強度行動障害):
+              <input
+                type="number"
+                min={0}
+                value={severeBehaviorAdditionCount}
+                onChange={(e) => setSevereBehaviorAdditionCount(Number(e.target.value))}
+              />
+            </label>
+            <label className="checkbox-label">
+              加算算定(指導員加配):
+              <input
+                type="number"
+                min={0}
+                value={instructorAdditionCount}
+                onChange={(e) => setInstructorAdditionCount(Number(e.target.value))}
+              />
+            </label>
+          </>
+        )}
         <button type="submit">設定</button>
       </form>
       <table>
@@ -71,6 +107,12 @@ export function RequiredStaffingSection() {
           <tr>
             <th>曜日</th>
             <th>必要人数</th>
+            {isDayService && (
+              <>
+                <th>加算算定(強度行動障害)</th>
+                <th>加算算定(指導員加配)</th>
+              </>
+            )}
             <th></th>
           </tr>
         </thead>
@@ -79,6 +121,12 @@ export function RequiredStaffingSection() {
             <tr key={r.id}>
               <td>{WEEKDAY_LABELS[r.weekday]}曜日</td>
               <td>{r.requiredCount}</td>
+              {isDayService && (
+                <>
+                  <td>{r.severeBehaviorAdditionCount ?? "-"}</td>
+                  <td>{r.instructorAdditionCount ?? "-"}</td>
+                </>
+              )}
               <td>
                 <button onClick={() => handleDelete(r.id)}>削除</button>
               </td>

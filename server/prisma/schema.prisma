@@ -127,6 +127,12 @@ model RequiredStaffing {
   facility     Facility @relation(fields: [facilityId], references: [id])
   weekday      Int // 0=日曜 ... 6=土曜
   requiredCount Int
+
+  // 放課後等デイサービス事業所専用の加算算定人数(2026-09-09追加)。
+  // 就労B型など他のサービス内容では使用しない(nullのまま)。
+  severeBehaviorAdditionCount     Int? // 加算算定を行う場合(強度行動障害)の必要人数
+  instructorAdditionCount         Int? // 加算算定を行う場合(指導員加配)の必要人数
+
   note         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

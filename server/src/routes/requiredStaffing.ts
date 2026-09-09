@@ -13,18 +13,31 @@ requiredStaffingRouter.get("/", async (req, res) => {
 });
 
 requiredStaffingRouter.post("/", async (req, res) => {
-  const { facilityId, weekday, requiredCount, note } = req.body;
+  const { facilityId, weekday, requiredCount, severeBehaviorAdditionCount, instructorAdditionCount, note } =
+    req.body;
   const requiredStaffing = await prisma.requiredStaffing.create({
-    data: { facilityId, weekday, requiredCount, note },
+    data: {
+      facilityId,
+      weekday,
+      requiredCount,
+      severeBehaviorAdditionCount: severeBehaviorAdditionCount ?? null,
+      instructorAdditionCount: instructorAdditionCount ?? null,
+      note,
+    },
   });
   res.status(201).json(requiredStaffing);
 });
 
 requiredStaffingRouter.put("/:id", async (req, res) => {
-  const { requiredCount, note } = req.body;
+  const { requiredCount, severeBehaviorAdditionCount, instructorAdditionCount, note } = req.body;
   const requiredStaffing = await prisma.requiredStaffing.update({
     where: { id: req.params.id },
-    data: { requiredCount, note },
+    data: {
+      requiredCount,
+      severeBehaviorAdditionCount: severeBehaviorAdditionCount ?? null,
+      instructorAdditionCount: instructorAdditionCount ?? null,
+      note,
+    },
   });
   res.json(requiredStaffing);
 });
