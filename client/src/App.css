@@ -100,6 +100,16 @@ tr.editing-row {
   background: #eef7ee;
 }
 
+tr.inline-edit-row td {
+  background: #f3faf3;
+  padding: 12px;
+  border-bottom: 2px solid #cfe6cf;
+}
+
+tr.inline-edit-row .staff-form {
+  margin: 0;
+}
+
 .staff-roster {
   display: flex;
   gap: 12px;
