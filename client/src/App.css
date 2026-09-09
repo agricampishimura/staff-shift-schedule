@@ -244,6 +244,13 @@ tr.editing-row {
   font-size: 0.85rem;
 }
 
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
 /* シフト表(シフト表作成・過去のシフト) */
 .shift-table-wrapper {
   overflow-x: auto;

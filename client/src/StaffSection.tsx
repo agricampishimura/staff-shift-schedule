@@ -19,6 +19,7 @@ const emptyForm = {
   employmentType: "" as StaffEmploymentType | "",
   employmentStatus: "ZAISEKI_CHU" as EmploymentStatus,
   drivingCapacityBand: "" as DrivingCapacityBand | "",
+  canBeChildInstructor: false,
   phoneNumber: "",
   email: "",
   primaryFacilityId: "",
@@ -31,6 +32,7 @@ function toForm(s: Staff) {
     employmentType: s.employmentType ?? ("" as StaffEmploymentType | ""),
     employmentStatus: s.employmentStatus,
     drivingCapacityBand: s.drivingCapacityBand ?? ("" as DrivingCapacityBand | ""),
+    canBeChildInstructor: s.canBeChildInstructor,
     phoneNumber: s.phoneNumber ?? "",
     email: s.email ?? "",
     primaryFacilityId: s.primaryFacilityId ?? "",
@@ -163,6 +165,14 @@ export function StaffSection() {
             </option>
           ))}
         </select>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={form.canBeChildInstructor}
+            onChange={(e) => setForm({ ...form, canBeChildInstructor: e.target.checked })}
+          />
+          児童指導員配置
+        </label>
         <input
           value={form.phoneNumber}
           onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
@@ -188,6 +198,7 @@ export function StaffSection() {
             <th>職制区分</th>
             <th>在籍ステータス</th>
             <th>運転可能量区分</th>
+            <th>児童指導員配置</th>
             <th>主な所属事業所</th>
             <th>電話番号</th>
             <th>メール</th>
@@ -206,6 +217,7 @@ export function StaffSection() {
               <td>{s.employmentType ? EMPLOYMENT_TYPE_LABELS[s.employmentType] : "-"}</td>
               <td>{EMPLOYMENT_STATUS_LABELS[s.employmentStatus]}</td>
               <td>{s.drivingCapacityBand ? DRIVING_CAPACITY_LABELS[s.drivingCapacityBand] : "-"}</td>
+              <td>{s.canBeChildInstructor ? "可" : "不可"}</td>
               <td>{s.primaryFacility?.name ?? "-"}</td>
               <td>{s.phoneNumber ?? "-"}</td>
               <td>{s.email ?? "-"}</td>

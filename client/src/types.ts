@@ -29,6 +29,7 @@ export interface Staff {
   employmentType: StaffEmploymentType | null;
   employmentStatus: EmploymentStatus;
   drivingCapacityBand: DrivingCapacityBand | null;
+  canBeChildInstructor: boolean;
   phoneNumber: string | null;
   email: string | null;
   primaryFacilityId: string | null;
