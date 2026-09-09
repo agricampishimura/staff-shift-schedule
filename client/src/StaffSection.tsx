@@ -20,6 +20,7 @@ type StaffFormState = {
   employmentStatus: EmploymentStatus;
   drivingCapacityBand: DrivingCapacityBand | "";
   canBeChildInstructor: boolean;
+  hasSevereBehaviorTraining: boolean;
   phoneNumber: string;
   email: string;
   primaryFacilityId: string;
@@ -32,6 +33,7 @@ const emptyForm: StaffFormState = {
   employmentStatus: "ZAISEKI_CHU",
   drivingCapacityBand: "",
   canBeChildInstructor: false,
+  hasSevereBehaviorTraining: false,
   phoneNumber: "",
   email: "",
   primaryFacilityId: "",
@@ -45,6 +47,7 @@ function toForm(s: Staff): StaffFormState {
     employmentStatus: s.employmentStatus,
     drivingCapacityBand: s.drivingCapacityBand ?? "",
     canBeChildInstructor: s.canBeChildInstructor,
+    hasSevereBehaviorTraining: s.hasSevereBehaviorTraining,
     phoneNumber: s.phoneNumber ?? "",
     email: s.email ?? "",
     primaryFacilityId: s.primaryFacilityId ?? "",
@@ -132,6 +135,14 @@ function StaffFormFields({
         />
         児童指導員配置
       </label>
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          checked={form.hasSevereBehaviorTraining}
+          onChange={(e) => setForm({ ...form, hasSevereBehaviorTraining: e.target.checked })}
+        />
+        強度行動障害研修
+      </label>
       <input
         value={form.phoneNumber}
         onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
@@ -216,6 +227,7 @@ export function StaffSection() {
             <th>在籍ステータス</th>
             <th>運転可能量区分</th>
             <th>児童指導員配置</th>
+            <th>強度行動障害研修</th>
             <th>主な所属事業所</th>
             <th>電話番号</th>
             <th>メール</th>
@@ -238,6 +250,7 @@ export function StaffSection() {
                   {s.drivingCapacityBand ? DRIVING_CAPACITY_LABELS[s.drivingCapacityBand] : "-"}
                 </td>
                 <td>{s.canBeChildInstructor ? "可" : "不可"}</td>
+                <td>{s.hasSevereBehaviorTraining ? "済" : "未"}</td>
                 <td>{s.primaryFacility?.name ?? "-"}</td>
                 <td>{s.phoneNumber ?? "-"}</td>
                 <td>{s.email ?? "-"}</td>
@@ -252,7 +265,7 @@ export function StaffSection() {
               </tr>
               {editingId === s.id && (
                 <tr className="inline-edit-row">
-                  <td colSpan={10}>
+                  <td colSpan={11}>
                     <form onSubmit={handleUpdate} className="staff-form">
                       <StaffFormFields form={editForm} setForm={setEditForm} facilities={facilities} />
                       <button type="submit">更新</button>

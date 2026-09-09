@@ -103,6 +103,8 @@ model Staff {
   // 児童指導員として配置可能か(2026-09-09追加)。放課後等デイサービス等の
   // 人員配置基準上、児童指導員として計上できる職員かどうかを管理する。
   canBeChildInstructor Boolean             @default(false)
+  // 強度行動障害研修の修了有無(2026-09-09追加)。
+  hasSevereBehaviorTraining Boolean        @default(false)
   phoneNumber         String?
   email               String?
   // 主な所属事業所(任意。職員は複数事業所を掛け持ちする場合があるため、

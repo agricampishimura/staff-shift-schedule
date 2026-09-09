@@ -43,6 +43,7 @@ export interface Staff {
   employmentStatus: EmploymentStatus;
   drivingCapacityBand: DrivingCapacityBand | null;
   canBeChildInstructor: boolean;
+  hasSevereBehaviorTraining: boolean;
   phoneNumber: string | null;
   email: string | null;
   primaryFacilityId: string | null;
