@@ -108,11 +108,17 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
     closePopup();
   };
 
+  const isNonWorkingDay = (day: number) => {
+    const dateObj = new Date(year, mon - 1, day);
+    return dateObj.getDay() === 0 || !!getHolidayName(dateObj);
+  };
+
   const applyBaseCategory = async () => {
     if (!baseCategoryId) return;
     const daysCount = new Date(year, mon, 0).getDate();
     const targets: string[] = [];
     for (let d = 1; d <= daysCount; d++) {
+      if (isNonWorkingDay(d)) continue;
       const dateValue = `${month}-${String(d).padStart(2, "0")}`;
       if (schedules[dateValue]?.dayType === "OFF") continue;
       targets.push(dateValue);
@@ -134,6 +140,7 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
   const isAllDaysSet = () => {
     const daysCount = new Date(year, mon, 0).getDate();
     for (let d = 1; d <= daysCount; d++) {
+      if (isNonWorkingDay(d)) continue;
       const dateValue = `${month}-${String(d).padStart(2, "0")}`;
       if (!schedules[dateValue]) return false;
     }
@@ -180,7 +187,7 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
         <button type="button" onClick={applyBaseCategory} disabled={!baseCategoryId}>
           出勤日に適用
         </button>
-        <span className="hint">(休日指定済みの日には適用されません)</span>
+        <span className="hint">(休日指定済みの日・日曜日・祝日には適用されません)</span>
       </div>
 
       <table className="mini-calendar">
