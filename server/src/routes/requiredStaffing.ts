@@ -13,15 +13,25 @@ requiredStaffingRouter.get("/", async (req, res) => {
 });
 
 requiredStaffingRouter.post("/", async (req, res) => {
-  const { facilityId, weekday, requiredCount, severeBehaviorAdditionCount, instructorAdditionCount, note } =
-    req.body;
+  const {
+    facilityId,
+    weekday,
+    requiredCount,
+    severeBehaviorAdditionCount,
+    severeBehaviorAdditionQualification,
+    instructorAdditionCount,
+    instructorAdditionQualification,
+    note,
+  } = req.body;
   const requiredStaffing = await prisma.requiredStaffing.create({
     data: {
       facilityId,
       weekday,
       requiredCount,
       severeBehaviorAdditionCount: severeBehaviorAdditionCount ?? null,
+      severeBehaviorAdditionQualification: severeBehaviorAdditionQualification || null,
       instructorAdditionCount: instructorAdditionCount ?? null,
+      instructorAdditionQualification: instructorAdditionQualification || null,
       note,
     },
   });
@@ -29,13 +39,22 @@ requiredStaffingRouter.post("/", async (req, res) => {
 });
 
 requiredStaffingRouter.put("/:id", async (req, res) => {
-  const { requiredCount, severeBehaviorAdditionCount, instructorAdditionCount, note } = req.body;
+  const {
+    requiredCount,
+    severeBehaviorAdditionCount,
+    severeBehaviorAdditionQualification,
+    instructorAdditionCount,
+    instructorAdditionQualification,
+    note,
+  } = req.body;
   const requiredStaffing = await prisma.requiredStaffing.update({
     where: { id: req.params.id },
     data: {
       requiredCount,
       severeBehaviorAdditionCount: severeBehaviorAdditionCount ?? null,
+      severeBehaviorAdditionQualification: severeBehaviorAdditionQualification || null,
       instructorAdditionCount: instructorAdditionCount ?? null,
+      instructorAdditionQualification: instructorAdditionQualification || null,
       note,
     },
   });

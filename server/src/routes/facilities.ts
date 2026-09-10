@@ -12,6 +12,7 @@ facilitiesRouter.post("/", async (req, res) => {
   const {
     name,
     serviceType,
+    capacity,
     openTime,
     closeTime,
     schoolDayOpenTime,
@@ -24,6 +25,7 @@ facilitiesRouter.post("/", async (req, res) => {
     data: {
       name,
       serviceType: serviceType || null,
+      capacity: capacity ?? null,
       openTime: openTime || null,
       closeTime: closeTime || null,
       schoolDayOpenTime: schoolDayOpenTime || null,
@@ -39,6 +41,7 @@ facilitiesRouter.put("/:id", async (req, res) => {
   const {
     name,
     serviceType,
+    capacity,
     openTime,
     closeTime,
     schoolDayOpenTime,
@@ -52,6 +55,7 @@ facilitiesRouter.put("/:id", async (req, res) => {
     data: {
       name,
       serviceType: serviceType || null,
+      capacity: capacity ?? null,
       openTime: openTime || null,
       closeTime: closeTime || null,
       schoolDayOpenTime: schoolDayOpenTime || null,

@@ -86,6 +86,22 @@ button {
   font-size: 0.85rem;
 }
 
+.addition-fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #d7dbe0;
+  border-radius: 6px;
+  padding: 6px 10px 8px;
+}
+
+.addition-fieldset legend {
+  font-size: 0.8rem;
+  color: #555;
+  padding: 0 4px;
+}
+
 .link-button {
   border: none;
   background: none;

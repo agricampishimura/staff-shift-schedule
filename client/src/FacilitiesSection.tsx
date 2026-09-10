@@ -5,6 +5,7 @@ import { SERVICE_TYPE_LABELS, type Facility, type ServiceType } from "./types";
 type FacilityFormState = {
   name: string;
   serviceType: ServiceType | "";
+  capacity: string;
   openTime: string;
   closeTime: string;
   schoolDayOpenTime: string;
@@ -16,6 +17,7 @@ type FacilityFormState = {
 const emptyForm: FacilityFormState = {
   name: "",
   serviceType: "",
+  capacity: "",
   openTime: "",
   closeTime: "",
   schoolDayOpenTime: "",
@@ -28,6 +30,7 @@ function toForm(f: Facility): FacilityFormState {
   return {
     name: f.name,
     serviceType: f.serviceType ?? "",
+    capacity: f.capacity != null ? String(f.capacity) : "",
     openTime: f.openTime ?? "",
     closeTime: f.closeTime ?? "",
     schoolDayOpenTime: f.schoolDayOpenTime ?? "",
@@ -67,6 +70,16 @@ function FacilityFormFields({
         onChange={(e) => setForm({ ...form, name: e.target.value })}
         placeholder="事業所名"
       />
+      <label className="checkbox-label">
+        定員:
+        <input
+          type="number"
+          min={0}
+          value={form.capacity}
+          onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+          placeholder="定員"
+        />
+      </label>
       <select
         value={form.serviceType}
         onChange={(e) => setForm({ ...form, serviceType: e.target.value as ServiceType | "" })}
@@ -154,6 +167,7 @@ export function FacilitiesSection() {
   const toPayload = (form: FacilityFormState) => ({
     ...form,
     serviceType: form.serviceType || null,
+    capacity: form.capacity !== "" ? Number(form.capacity) : null,
     openTime: form.openTime || null,
     closeTime: form.closeTime || null,
     schoolDayOpenTime: form.schoolDayOpenTime || null,
@@ -195,6 +209,7 @@ export function FacilitiesSection() {
         <thead>
           <tr>
             <th>事業所名</th>
+            <th>定員</th>
             <th>サービス内容</th>
             <th>通常開所時間</th>
             <th></th>
@@ -209,6 +224,7 @@ export function FacilitiesSection() {
                     {f.name}
                   </button>
                 </td>
+                <td>{f.capacity ?? "-"}</td>
                 <td>{f.serviceType ? SERVICE_TYPE_LABELS[f.serviceType] : "-"}</td>
                 <td>{hoursSummary(f)}</td>
                 <td>
@@ -222,7 +238,7 @@ export function FacilitiesSection() {
               </tr>
               {editingId === f.id && (
                 <tr className="inline-edit-row">
-                  <td colSpan={4}>
+                  <td colSpan={5}>
                     <form onSubmit={handleUpdate} className="inline-form">
                       <FacilityFormFields form={editForm} setForm={setEditForm} />
                       <button type="submit">更新</button>

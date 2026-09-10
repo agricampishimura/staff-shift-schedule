@@ -9,7 +9,9 @@ export function RequiredStaffingSection() {
   const [weekday, setWeekday] = useState(1);
   const [requiredCount, setRequiredCount] = useState(1);
   const [severeBehaviorAdditionCount, setSevereBehaviorAdditionCount] = useState(0);
+  const [severeBehaviorAdditionQualification, setSevereBehaviorAdditionQualification] = useState("");
   const [instructorAdditionCount, setInstructorAdditionCount] = useState(0);
+  const [instructorAdditionQualification, setInstructorAdditionQualification] = useState("");
 
   useEffect(() => {
     api.get<Facility[]>("/facilities").then((fs) => {
@@ -38,7 +40,9 @@ export function RequiredStaffingSection() {
       weekday,
       requiredCount,
       severeBehaviorAdditionCount: isDayService ? severeBehaviorAdditionCount : null,
+      severeBehaviorAdditionQualification: isDayService ? severeBehaviorAdditionQualification : null,
       instructorAdditionCount: isDayService ? instructorAdditionCount : null,
+      instructorAdditionQualification: isDayService ? instructorAdditionQualification : null,
     });
     load(facilityId);
   };
@@ -52,15 +56,22 @@ export function RequiredStaffingSection() {
     <section>
       <h2>必要配置人数マスタ</h2>
       <p className="hint">
-        現時点では曜日ごとの固定人数のみ設定可能。当日の利用人数に応じた変動ルールは今後の検討事項。
+        曜日ごとの固定人数を設定します。放課後等デイサービスは、基礎の必要配置人数に加えて、児童指導員配置加算・強度行動障害児支援加算をそれぞれ別に登録できます。
       </p>
-      <select value={facilityId} onChange={(e) => setFacilityId(e.target.value)}>
-        {facilities.map((f) => (
-          <option key={f.id} value={f.id}>
-            {f.name}
-          </option>
-        ))}
-      </select>
+      <label className="checkbox-label">
+        事業所:
+        <select value={facilityId} onChange={(e) => setFacilityId(e.target.value)}>
+          {facilities.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      {selectedFacility && (
+        <span className="hint">定員: {selectedFacility.capacity ?? "未設定"}名</span>
+      )}
+
       <form onSubmit={handleAdd} className="inline-form">
         <select value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
           {WEEKDAY_LABELS.map((label, i) => (
@@ -70,7 +81,7 @@ export function RequiredStaffingSection() {
           ))}
         </select>
         <label className="checkbox-label">
-          必要人数:
+          {isDayService ? "①必要配置人数:" : "必要配置人数:"}
           <input
             type="number"
             min={0}
@@ -80,24 +91,48 @@ export function RequiredStaffingSection() {
         </label>
         {isDayService && (
           <>
-            <label className="checkbox-label">
-              加算算定(強度行動障害):
-              <input
-                type="number"
-                min={0}
-                value={severeBehaviorAdditionCount}
-                onChange={(e) => setSevereBehaviorAdditionCount(Number(e.target.value))}
-              />
-            </label>
-            <label className="checkbox-label">
-              加算算定(指導員加配):
-              <input
-                type="number"
-                min={0}
-                value={instructorAdditionCount}
-                onChange={(e) => setInstructorAdditionCount(Number(e.target.value))}
-              />
-            </label>
+            <fieldset className="addition-fieldset">
+              <legend>②児童指導員配置加算を取る場合</legend>
+              <label className="checkbox-label">
+                追加人数:
+                <input
+                  type="number"
+                  min={0}
+                  value={instructorAdditionCount}
+                  onChange={(e) => setInstructorAdditionCount(Number(e.target.value))}
+                />
+              </label>
+              <label className="checkbox-label">
+                必要資格:
+                <input
+                  type="text"
+                  value={instructorAdditionQualification}
+                  onChange={(e) => setInstructorAdditionQualification(e.target.value)}
+                  placeholder="例: 児童指導員"
+                />
+              </label>
+            </fieldset>
+            <fieldset className="addition-fieldset">
+              <legend>③強度行動障害児支援加算を取る場合</legend>
+              <label className="checkbox-label">
+                追加人数:
+                <input
+                  type="number"
+                  min={0}
+                  value={severeBehaviorAdditionCount}
+                  onChange={(e) => setSevereBehaviorAdditionCount(Number(e.target.value))}
+                />
+              </label>
+              <label className="checkbox-label">
+                必要資格:
+                <input
+                  type="text"
+                  value={severeBehaviorAdditionQualification}
+                  onChange={(e) => setSevereBehaviorAdditionQualification(e.target.value)}
+                  placeholder="例: 実践研修修了者"
+                />
+              </label>
+            </fieldset>
           </>
         )}
         <button type="submit">設定</button>
@@ -106,11 +141,11 @@ export function RequiredStaffingSection() {
         <thead>
           <tr>
             <th>曜日</th>
-            <th>必要人数</th>
+            <th>{isDayService ? "①必要配置人数" : "必要配置人数"}</th>
             {isDayService && (
               <>
-                <th>加算算定(強度行動障害)</th>
-                <th>加算算定(指導員加配)</th>
+                <th>②児童指導員配置加算(追加人数/資格)</th>
+                <th>③強度行動障害児支援加算(追加人数/資格)</th>
               </>
             )}
             <th></th>
@@ -123,8 +158,14 @@ export function RequiredStaffingSection() {
               <td>{r.requiredCount}</td>
               {isDayService && (
                 <>
-                  <td>{r.severeBehaviorAdditionCount ?? "-"}</td>
-                  <td>{r.instructorAdditionCount ?? "-"}</td>
+                  <td>
+                    {r.instructorAdditionCount ?? "-"}
+                    {r.instructorAdditionQualification ? ` / ${r.instructorAdditionQualification}` : ""}
+                  </td>
+                  <td>
+                    {r.severeBehaviorAdditionCount ?? "-"}
+                    {r.severeBehaviorAdditionQualification ? ` / ${r.severeBehaviorAdditionQualification}` : ""}
+                  </td>
                 </>
               )}
               <td>

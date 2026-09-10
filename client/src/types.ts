@@ -22,6 +22,7 @@ export interface Facility {
   id: string;
   name: string;
   serviceType: ServiceType | null;
+  capacity: number | null;
   openTime: string | null;
   closeTime: string | null;
   schoolDayOpenTime: string | null;
@@ -55,9 +56,11 @@ export interface RequiredStaffing {
   facilityId: string;
   weekday: number;
   requiredCount: number;
-  // 放課後等デイサービス事業所専用の加算算定人数(就労B型等ではnull)
+  // 放課後等デイサービス事業所専用の加算算定要件(就労B型等ではnull)
   severeBehaviorAdditionCount: number | null;
+  severeBehaviorAdditionQualification: string | null;
   instructorAdditionCount: number | null;
+  instructorAdditionQualification: string | null;
   note: string | null;
 }
 

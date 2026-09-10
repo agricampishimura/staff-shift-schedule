@@ -28,6 +28,8 @@ model Facility {
   id          String       @id @default(cuid())
   name        String
   serviceType ServiceType?
+  // 利用定員(2026-09-10追加)。必要配置人数マスタの基礎人数算定の元になる。
+  capacity    Int?
 
   // 通常開所時間(就労B型: 学校開校日/休校日の区別なく単一の開所時間を使う)
   openTime  String? // "HH:mm"
@@ -121,17 +123,26 @@ model Staff {
 
 // 必要配置人数マスタ(シフト作成に関する回答.pdf 論点3)。
 // 現時点では曜日ごとの固定人数のみ。当日の利用人数に応じた変動ルールは未実装(今後の検討事項)。
+//
+// サービス内容によって登録項目が異なる(2026-09-10改訂、放課後等デイサービスの
+// 人員配置基準・加算要件レポートに基づく):
+// - 就労B型: requiredCountのみを使用(定員に応じた必要配置人数)。
+// - 放課後等デイサービス: ①requiredCount(基礎の必要配置人数)に加え、
+//   ②児童指導員配置加算・③強度行動障害児支援加算それぞれについて、
+//   「加算算定を行う場合の追加人数」と「その追加人員に必要な資格」を別々に登録する。
 model RequiredStaffing {
   id           String   @id @default(cuid())
   facilityId   String
   facility     Facility @relation(fields: [facilityId], references: [id])
   weekday      Int // 0=日曜 ... 6=土曜
-  requiredCount Int
+  requiredCount Int // ①基礎の必要配置人数(就労B型はこの項目のみ使用)
 
-  // 放課後等デイサービス事業所専用の加算算定人数(2026-09-09追加)。
+  // 放課後等デイサービス事業所専用の加算算定要件(2026-09-09追加、2026-09-10に資格欄を追加)。
   // 就労B型など他のサービス内容では使用しない(nullのまま)。
-  severeBehaviorAdditionCount     Int? // 加算算定を行う場合(強度行動障害)の必要人数
-  instructorAdditionCount         Int? // 加算算定を行う場合(指導員加配)の必要人数
+  severeBehaviorAdditionCount         Int?    // ③強度行動障害児支援加算: 追加人数
+  severeBehaviorAdditionQualification String? // ③強度行動障害児支援加算: 追加人員に必要な資格(例:実践研修修了者)
+  instructorAdditionCount             Int?    // ②児童指導員配置加算: 追加人数
+  instructorAdditionQualification     String? // ②児童指導員配置加算: 追加人員に必要な資格(例:児童指導員)
 
   note         String?
   createdAt    DateTime @default(now())
