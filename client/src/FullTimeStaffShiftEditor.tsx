@@ -92,6 +92,19 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
     closePopup();
   };
 
+  const handleClear = async (dateValue: string) => {
+    const existing = schedules[dateValue];
+    if (existing) {
+      await api.delete(`/day-schedules/${existing.id}`);
+      setSchedules((prev) => {
+        const next = { ...prev };
+        delete next[dateValue];
+        return next;
+      });
+    }
+    closePopup();
+  };
+
   const handleTimeChange = async (dateValue: string, categoryId: string) => {
     await saveDay(dateValue, { dayType: "WORK", workTimeCategoryId: categoryId });
     closePopup();
@@ -277,6 +290,11 @@ export function FullTimeStaffShiftEditor({ staff, month, workTimeCategories, onB
                 <button type="button" onClick={() => setPopupStage("timeList")}>
                   時間変更
                 </button>
+                {popupDate && schedules[popupDate] && (
+                  <button type="button" onClick={() => handleClear(popupDate)}>
+                    設定をクリア
+                  </button>
+                )}
                 <button type="button" onClick={closePopup}>
                   キャンセル
                 </button>
