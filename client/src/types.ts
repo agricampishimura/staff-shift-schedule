@@ -15,7 +15,7 @@ export type DrivingCapacityBand =
   | "BAND_F"
   | "BAND_G"
   | "BAND_H";
-export type ShiftAssignmentStatus = "DRAFT" | "CONFIRMED";
+export type ShiftAssignmentStatus = "DRAFT" | "CONFIRMED" | "PENDING_REMOVAL";
 export type ServiceType = "EMPLOYMENT_TYPE_B" | "AFTER_SCHOOL_DAY_SERVICE";
 
 export interface Facility {
@@ -45,6 +45,8 @@ export interface Staff {
   drivingCapacityBand: DrivingCapacityBand | null;
   canBeChildInstructor: boolean;
   hasSevereBehaviorTraining: boolean;
+  isServiceManager: boolean;
+  isAlwaysOnDuty: boolean;
   phoneNumber: string | null;
   email: string | null;
   primaryFacilityId: string | null;
@@ -116,6 +118,11 @@ export type DayScheduleType = "WORK" | "OFF";
 export type OffType = "REQUESTED" | "PAID_LEAVE";
 export type ArbeitAvailability = "AVAILABLE" | "CONFIRMED";
 
+export const OFF_TYPE_LABELS: Record<OffType, string> = {
+  REQUESTED: "希望休",
+  PAID_LEAVE: "有給",
+};
+
 export interface WorkTimeCategory {
   id: string;
   code: string;
@@ -155,4 +162,99 @@ export interface StaffScheduleStatus {
   month: string;
   isFinalized: boolean;
   isComplete: boolean;
+}
+
+export type FacilityCheckStatus = "RED" | "YELLOW" | "GREEN" | "CLOSED" | "UNCONFIGURED";
+export type AdditionType = "INSTRUCTOR" | "SEVERE_BEHAVIOR";
+
+export const ADDITION_TYPE_LABELS: Record<AdditionType, string> = {
+  INSTRUCTOR: "児童指導員配置加算",
+  SEVERE_BEHAVIOR: "強度行動障害児支援加算",
+};
+
+export interface AdditionCheck {
+  type: AdditionType;
+  requiredAdditionCount: number;
+  qualifiedAssignedCount: number;
+  met: boolean;
+}
+
+export interface AssignedStaffCard {
+  shiftAssignmentId: string;
+  staffId: string;
+  staffName: string;
+  employmentType: StaffEmploymentType | null;
+  canBeChildInstructor: boolean;
+  hasSevereBehaviorTraining: boolean;
+  isServiceManager: boolean;
+}
+
+export type ClosedReason = "HOLIDAY" | "MANUAL" | "WEEKLY_OFF";
+
+export interface FacilityCheckResult {
+  facilityId: string;
+  facilityName: string;
+  status: FacilityCheckStatus;
+  closedReason: ClosedReason | null;
+  requiredCount: number | null;
+  assignedCount: number;
+  totalAssignedCount: number;
+  additions: AdditionCheck[];
+  assignedStaff: AssignedStaffCard[];
+  alerts: string[];
+}
+
+export interface PendingRemovalStaffCard extends AssignedStaffCard {
+  facilityId: string;
+  facilityName: string;
+}
+
+export interface ShiftCheckDay {
+  date: string;
+  weekday: number;
+  holidayName: string | null;
+  overallStatus: FacilityCheckStatus;
+  facilities: FacilityCheckResult[];
+  pendingRemovalStaff: PendingRemovalStaffCard[];
+}
+
+export interface AdditionRate {
+  facilityId: string;
+  facilityName: string;
+  type: AdditionType;
+  metDays: number;
+  applicableDays: number;
+  percentage: number | null;
+}
+
+export interface ShiftCheckResult {
+  days: ShiftCheckDay[];
+  additionRates: AdditionRate[];
+}
+
+export interface GenerateShiftAssignmentsResult {
+  generatedCount: number;
+  removedCount: number;
+  unassignedStaff: string[];
+}
+
+export interface AvailableStaffCard {
+  staffId: string;
+  name: string;
+  employmentType: StaffEmploymentType | null;
+  permissionLevel: PermissionLevel;
+  canBeChildInstructor: boolean;
+  hasSevereBehaviorTraining: boolean;
+  offType: OffType | null;
+  isLocked: boolean;
+}
+
+export interface PlaceShiftAssignmentResult {
+  shiftAssignment: ShiftAssignment;
+  scheduleChanged: boolean;
+}
+
+export interface ConfirmMonthResult {
+  confirmedCount: number;
+  removedCount: number;
 }

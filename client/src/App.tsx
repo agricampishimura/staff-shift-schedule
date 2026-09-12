@@ -30,8 +30,15 @@ function App() {
         ))}
       </nav>
       <main className="app-main">
-        {tab === "shift" && <ShiftAssignmentsSection />}
-        {tab === "master" && <MasterDataView />}
+        {/* タブ切り替えでアンマウントすると、シフト作成タブ側で進行中の
+            勤務表チェック等の状態が失われてしまうため、常にマウントしたまま
+            hidden属性で表示/非表示を切り替える(2026-09-12追加)。 */}
+        <div hidden={tab !== "shift"}>
+          <ShiftAssignmentsSection />
+        </div>
+        <div hidden={tab !== "master"}>
+          <MasterDataView />
+        </div>
       </main>
     </div>
   );

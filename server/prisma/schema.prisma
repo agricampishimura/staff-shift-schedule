@@ -47,6 +47,21 @@ model Facility {
   staff             Staff[]
   requiredStaffings RequiredStaffing[]
   shiftAssignments  ShiftAssignment[]
+  closures          FacilityClosure[]
+}
+
+// 特定の日だけの臨時休業(2026-09-12追加)。勤務表チェックで人数不足を解消できない場合に、
+// 必要配置人数マスタ(曜日別)とは別に、その日だけ「開所しない」ことを記録する。
+// 稼働日数・過不足判定の対象外(祝日と同様の扱い)。
+model FacilityClosure {
+  id         String   @id @default(cuid())
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id])
+  date       DateTime
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  @@unique([facilityId, date])
 }
 
 // 権限設定(職員情報マスター登録項目②)
@@ -107,6 +122,15 @@ model Staff {
   canBeChildInstructor Boolean             @default(false)
   // 強度行動障害研修の修了有無(2026-09-09追加)。
   hasSevereBehaviorTraining Boolean        @default(false)
+  // サービス管理責任者(就労B型)/児童発達支援管理責任者(放課後等デイ)を兼ねるか
+  // (2026-09-12追加、略称「サビ管/自発管」)。該当する職員は主な所属事業所に専従のため、
+  // 勤務表チェックの「配置可能な職員パレット」からは他事業所へドラッグ配置できないようにする。
+  isServiceManager    Boolean             @default(false)
+  // 役員等、時間に関係なく主な所属事業所に毎日(稼働日)出勤する専従職員か
+  // (2026-09-12追加。例: 石村匠はベジウェル専従で毎日出勤)。該当する職員は
+  // 「仮の勤務表を作成」実行時に、稼働日であれば削除されていない限り自動的に
+  // 主な所属事業所へ配置される(StaffDayScheduleへの入力は不要)。
+  isAlwaysOnDuty      Boolean             @default(false)
   phoneNumber         String?
   email               String?
   // 主な所属事業所(任意。職員は複数事業所を掛け持ちする場合があるため、
@@ -119,6 +143,19 @@ model Staff {
   shiftAssignments ShiftAssignment[]
   daySchedules     StaffDaySchedule[]
   scheduleStatuses StaffScheduleStatus[]
+  workExclusions   StaffDayExclusion[]
+}
+
+// isAlwaysOnDuty職員が特定の日だけ出勤しない例外(2026-09-12追加)。
+// 「仮の勤務表を作成」で自動配置された行を勤務表チェック画面から削除すると、
+// 次回の自動配置で復活しないようこのレコードを作成する(削除の意思を保持する)。
+model StaffDayExclusion {
+  id      String @id @default(cuid())
+  staffId String
+  staff   Staff  @relation(fields: [staffId], references: [id])
+  date    DateTime
+
+  @@unique([staffId, date])
 }
 
 // 必要配置人数マスタ(シフト作成に関する回答.pdf 論点3)。
@@ -154,6 +191,7 @@ model RequiredStaffing {
 enum ShiftAssignmentStatus {
   DRAFT // 下書き
   CONFIRMED // 確定
+  PENDING_REMOVAL // 削除保留(2026-09-12追加。アルバイトの出勤取消候補。月次確定操作で実削除される)
 }
 
 // 職員シフト割当。1人・1日・1事業所につき1レコード。
@@ -164,8 +202,11 @@ model ShiftAssignment {
   staff      Staff                 @relation(fields: [staffId], references: [id])
   facilityId String
   facility   Facility              @relation(fields: [facilityId], references: [id])
-  startTime  String // "HH:mm"
-  endTime    String // "HH:mm"
+  // 勤務表チェック機能(2026-09-12)からは件数ベースの判定のみ行うため、
+  // アルバイト(時間未入力)・運転専従パート(複数ブロック)等、単一の
+  // 開始・終了時刻を持たない職員も登録できるよう任意項目にした。
+  startTime  String? // "HH:mm"
+  endTime    String? // "HH:mm"
   status     ShiftAssignmentStatus @default(DRAFT)
   note       String?
   createdAt  DateTime              @default(now())

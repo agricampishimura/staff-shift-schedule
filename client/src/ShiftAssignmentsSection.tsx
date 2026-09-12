@@ -5,6 +5,8 @@ import { DriverStaffShiftEditor } from "./DriverStaffShiftEditor";
 import { FullTimeStaffShiftEditor } from "./FullTimeStaffShiftEditor";
 import { MonthlyShiftTable } from "./MonthlyShiftTable";
 import { PartTimeStaffShiftEditor } from "./PartTimeStaffShiftEditor";
+import { ShiftCheckView } from "./ShiftCheckView";
+import { clearShiftCheckProgress, loadShiftCheckProgress } from "./shiftCheckProgress";
 import type { Staff, StaffScheduleStatus, WorkTimeCategory } from "./types";
 
 function monthOf(base: Date, offset: number) {
@@ -102,7 +104,7 @@ function RosterColumn({
   );
 }
 
-type ViewMode = "roster" | "table" | "history" | "staffDetail";
+type ViewMode = "roster" | "table" | "check" | "history" | "staffDetail";
 
 export function ShiftAssignmentsSection() {
   const { options: monthOptions, defaultValue: defaultMonth } = useMonthOptions();
@@ -110,6 +112,19 @@ export function ShiftAssignmentsSection() {
 
   const [viewMode, setViewMode] = useState<ViewMode>("roster");
   const [month, setMonth] = useState(defaultMonth);
+  // 勤務表チェックの対象月はトップ画面(ロースター)の対象月とは独立させる
+  // (2026-09-12追加)。共有すると、トップ画面で別の月を見ただけで進行中の
+  // チェック内容が意図せずリセットされてしまうため。
+  // 初期値はlocalStorageの保存内容から復元する(ページ再読み込み後も
+  // 「作成中のシフト作成に戻る」で復帰できるようにするため)。
+  const [checkMonth, setCheckMonth] = useState(() => loadShiftCheckProgress()?.month ?? defaultMonth);
+  const [hasCheckProgress, setHasCheckProgress] = useState(() => loadShiftCheckProgress() !== null);
+  const [initialSelectedDay, setInitialSelectedDay] = useState<string | null>(
+    () => loadShiftCheckProgress()?.selectedDay ?? null
+  );
+  // 「最初からシフト作成を行う」で押下時にキーを変えてShiftCheckViewを強制的に
+  // 再マウントし、内部状態(選択中の日付・取得済みデータ等)を完全にリセットする。
+  const [checkResumeKey, setCheckResumeKey] = useState(0);
   const [historyMonth, setHistoryMonth] = useState(defaultPastMonth);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [workTimeCategories, setWorkTimeCategories] = useState<WorkTimeCategory[]>([]);
@@ -156,14 +171,37 @@ export function ShiftAssignmentsSection() {
     setViewMode("roster");
   };
 
-  if (viewMode === "staffDetail" && selectedStaff) {
-    const isFullTime =
-      selectedStaff.employmentType && FULL_TIME_TYPES.includes(selectedStaff.employmentType);
-    const isDriver = selectedStaff.employmentType === "PART_TIME_DRIVER";
-    const isArbeit = selectedStaff.employmentType === "ARBEIT_TRANSPORT";
-    return (
-      <section>
-        {isFullTime ? (
+  // 「最初からシフト作成を行う」(2026-09-12追加): 作成途中の保存内容を破棄し、
+  // 対象月をトップ画面(ロースター)で選択中の月に合わせたうえで、ShiftCheckViewを
+  // 強制再マウントしてまっさらな状態から勤務表チェックを開始する。
+  const handleStartOver = () => {
+    if (
+      !window.confirm(
+        "作成中の勤務表チェックの内容を破棄して、最初からやり直しますか?(すでに保存済みの配置データ自体は削除されません)"
+      )
+    )
+      return;
+    clearShiftCheckProgress();
+    setCheckMonth(month);
+    setInitialSelectedDay(null);
+    setCheckResumeKey((k) => k + 1);
+    setHasCheckProgress(true);
+    setViewMode("check");
+  };
+
+  const handleCheckConfirmed = () => {
+    setHasCheckProgress(false);
+  };
+
+  const isFullTime =
+    selectedStaff?.employmentType && FULL_TIME_TYPES.includes(selectedStaff.employmentType);
+  const isDriver = selectedStaff?.employmentType === "PART_TIME_DRIVER";
+  const isArbeit = selectedStaff?.employmentType === "ARBEIT_TRANSPORT";
+
+  return (
+    <section>
+      {viewMode === "staffDetail" && selectedStaff ? (
+        isFullTime ? (
           <FullTimeStaffShiftEditor
             staff={selectedStaff}
             month={month}
@@ -176,75 +214,142 @@ export function ShiftAssignmentsSection() {
           <ArbeitStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
         ) : (
           <PartTimeStaffShiftEditor staff={selectedStaff} month={month} onBack={handleBackFromDetail} />
-        )}
-      </section>
-    );
-  }
-
-  return (
-    <section>
-      <h2>シフト作成</h2>
-
-      <div className="view-mode-buttons">
-        <button
-          type="button"
-          className={viewMode === "table" ? "active" : ""}
-          onClick={() => setViewMode(viewMode === "table" ? "roster" : "table")}
-        >
-          シフト表作成
-        </button>
-        <button
-          type="button"
-          className={viewMode === "history" ? "active" : ""}
-          onClick={() => setViewMode(viewMode === "history" ? "roster" : "history")}
-        >
-          過去のシフト
-        </button>
-      </div>
-
-      {viewMode === "roster" && (
+        )
+      ) : (
         <>
-          <label>
-            対象月:{" "}
-            <select value={month} onChange={(e) => setMonth(e.target.value)}>
-              {monthOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <h2>シフト作成</h2>
 
-          <p className="hint">名前カードをクリックすると、その職員の月間シフトを設定できます。</p>
-
-          <div className="staff-roster">
-            <RosterColumn
-              title="正社員(短時間正社員含む)"
-              staff={fullTimeStaff}
-              statusMap={statusMap}
-              onSelect={handleSelectStaff}
-            />
-            <RosterColumn
-              title="パート"
-              staff={partTimeStaff}
-              statusMap={statusMap}
-              onSelect={handleSelectStaff}
-            />
-            <RosterColumn
-              title="アルバイト"
-              staff={arbeitStaff}
-              statusMap={statusMap}
-              onSelect={handleSelectStaff}
-            />
+          <div className="view-mode-buttons">
+            <button
+              type="button"
+              className={viewMode === "table" ? "active" : ""}
+              onClick={() => setViewMode(viewMode === "table" ? "roster" : "table")}
+            >
+              シフト表作成
+            </button>
+            <button
+              type="button"
+              className={viewMode === "check" ? "active" : ""}
+              onClick={() => {
+                // 作成途中の状態が無い(=新規にチェックを始める)場合は、勤務表チェックの
+                // 対象月をトップ画面(ロースター)で選択中の月に合わせる(2026-09-12修正)。
+                // これを行わないと、シフト表作成で入力した月と勤務表チェックの対象月が
+                // 食い違い、他職員の配置が仮の勤務表に反映されないという不具合になる。
+                // 既に作成途中の状態がある場合は、その対象月を変えずに維持する
+                // (トップ画面で別の月を見ただけで進行中のチェックが失われないようにするため)。
+                if (!hasCheckProgress) {
+                  setCheckMonth(month);
+                }
+                setHasCheckProgress(true);
+                setViewMode(viewMode === "check" ? "roster" : "check");
+              }}
+            >
+              勤務表チェック
+            </button>
+            <button
+              type="button"
+              className={viewMode === "history" ? "active" : ""}
+              onClick={() => setViewMode(viewMode === "history" ? "roster" : "history")}
+            >
+              過去のシフト
+            </button>
           </div>
+
+          {viewMode === "roster" && (
+            <>
+              {hasCheckProgress && (
+                <p className="resume-check-banner">
+                  作成中の勤務表チェックがあります。
+                  <button type="button" onClick={() => setViewMode("check")}>
+                    作成中のシフト作成に戻る
+                  </button>
+                  <button type="button" onClick={handleStartOver}>
+                    最初からシフト作成を行う
+                  </button>
+                </p>
+              )}
+
+              <label>
+                対象月:{" "}
+                <select value={month} onChange={(e) => setMonth(e.target.value)}>
+                  {monthOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <p className="hint">名前カードをクリックすると、その職員の月間シフトを設定できます。</p>
+
+              <div className="staff-roster">
+                <RosterColumn
+                  title="正社員(短時間正社員含む)"
+                  staff={fullTimeStaff}
+                  statusMap={statusMap}
+                  onSelect={handleSelectStaff}
+                />
+                <RosterColumn
+                  title="パート"
+                  staff={partTimeStaff}
+                  statusMap={statusMap}
+                  onSelect={handleSelectStaff}
+                />
+                <RosterColumn
+                  title="アルバイト"
+                  staff={arbeitStaff}
+                  statusMap={statusMap}
+                  onSelect={handleSelectStaff}
+                />
+              </div>
+            </>
+          )}
+
+          {viewMode === "table" && (
+            <>
+              <label>
+                対象月:{" "}
+                <select value={month} onChange={(e) => setMonth(e.target.value)}>
+                  {monthOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <MonthlyShiftTable month={month} />
+            </>
+          )}
+
+          {viewMode === "history" && (
+            <>
+              <label>
+                対象月:{" "}
+                <select value={historyMonth} onChange={(e) => setHistoryMonth(e.target.value)}>
+                  {pastMonthOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <MonthlyShiftTable month={historyMonth} />
+            </>
+          )}
         </>
       )}
 
-      {viewMode === "table" && (
-        <>
+      {/* 進行中の勤務表チェックは、他のビュー(トップ画面・個別編集画面等)に
+          移動しても状態を保持するため、viewModeに関わらず常にマウントしたまま
+          hidden属性で表示/非表示を切り替える(2026-09-12追加)。 */}
+      {hasCheckProgress && (
+        <div hidden={viewMode !== "check"}>
+          <button type="button" className="back-to-top-button" onClick={() => setViewMode("roster")}>
+            ← シフト作成トップに戻る
+          </button>
           <label>
             対象月:{" "}
-            <select value={month} onChange={(e) => setMonth(e.target.value)}>
+            <select value={checkMonth} onChange={(e) => setCheckMonth(e.target.value)}>
               {monthOptions.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
@@ -252,26 +357,14 @@ export function ShiftAssignmentsSection() {
               ))}
             </select>
           </label>
-          <MonthlyShiftTable month={month} />
-        </>
+          <ShiftCheckView
+            key={checkResumeKey}
+            month={checkMonth}
+            initialSelectedDay={initialSelectedDay}
+            onConfirmed={handleCheckConfirmed}
+          />
+        </div>
       )}
-
-      {viewMode === "history" && (
-        <>
-          <label>
-            対象月:{" "}
-            <select value={historyMonth} onChange={(e) => setHistoryMonth(e.target.value)}>
-              {pastMonthOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <MonthlyShiftTable month={historyMonth} />
-        </>
-      )}
-
     </section>
   );
 }
