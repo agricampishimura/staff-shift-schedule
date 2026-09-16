@@ -9,6 +9,7 @@
 - **要件定義の正本(v0.1ドラフト)**: [docs/requirements-v0.1-draft.md](docs/requirements-v0.1-draft.md)。ヒアリング未実施の項目は「未確定」と明記してある。以後の仕様変更はまずこのファイルを更新する。
 - **経緯・スコープ決定の記録**: [docs/decisions/2026-09-07-project-kickoff.md](docs/decisions/2026-09-07-project-kickoff.md)。
 - [docs/decisions/2026-09-16-confirmed-shift-excel-export.md](docs/decisions/2026-09-16-confirmed-shift-excel-export.md) — シフト確定時のExcel出力(全体/内訳2シート)、共有ドライブ(`Z:\アソシエイト共有書類\全員出勤表\シフト表`)への保存、編集制限パスワード(シート保護)。
+- [docs/decisions/2026-09-16-external-staff-api.md](docs/decisions/2026-09-16-external-staff-api.md) — 送迎プラン作成サポート向け職員マスタ参照API(`GET /api/external/staff`、`STAFF_API_KEY`)。`drivingCapacityBand`(8段階→7段階)・`employmentType`(nullable)の仕様差分に注意。
 
 ## 経緯(重要)
 
@@ -31,7 +32,7 @@
 | フロントエンド | React + TypeScript + Vite(`client/`) |
 | バックエンド | Node.js + TypeScript + Express(`server/`) |
 | ORM/DB | Prisma + SQLite(開発)。本番は PostgreSQL へ切り替え想定。Prisma は v6系に固定(v7で `datasource url` が廃止されたため) |
-| 外部連携 | AgriCamp向け参照API(`/api/external/shift-assignments`)。x-api-keyヘッダによる簡易認証 |
+| 外部連携 | AgriCamp向け参照API(`/api/external/shift-assignments`)・送迎プラン作成サポート向け職員マスタ参照API(`/api/external/staff`)。x-api-keyヘッダによる認証(エンドポイントごとに別の環境変数) |
 
 ## ディレクトリ構成
 
@@ -68,6 +69,7 @@ code/
 
 - `/api/facilities`, `/api/staff`, `/api/required-staffing`, `/api/shift-assignments`: 基本CRUD。
 - `/api/external/shift-assignments`(GET、`month=YYYY-MM`必須、`facilityId`任意): 確定(CONFIRMED)シフトのみ返す。`x-api-key` ヘッダが `EXTERNAL_API_KEY` 環境変数と一致しないと401。
+- `/api/external/staff`(GET、2026-09-16追加): 送迎プラン作成サポート向け。在籍ステータス問わず全職員を返す。`x-api-key` ヘッダが `STAFF_API_KEY` 環境変数と一致しないと401。仕様差分は[decisions/2026-09-16-external-staff-api.md](docs/decisions/2026-09-16-external-staff-api.md)参照。
 - 未着手: 認証(職員向けマジックリンク+SMS OTP)、LINE連携、法定労働時間チェック、必要配置人数の変動ロジック、AgriCampとの実連携仕様確定。
 
 ## セットアップ・起動方法

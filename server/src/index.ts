@@ -11,7 +11,6 @@ import { staffScheduleStatusRouter } from "./routes/staffScheduleStatus.js";
 import { shiftCheckRouter } from "./routes/shiftCheck.js";
 import { facilityClosuresRouter } from "./routes/facilityClosures.js";
 import { externalRouter } from "./routes/external.js";
-import { apiKeyAuth } from "./middleware/apiKeyAuth.js";
 
 const app = express();
 app.use(cors());
@@ -30,8 +29,10 @@ app.use("/api/staff-schedule-status", staffScheduleStatusRouter);
 app.use("/api/shift-check", shiftCheckRouter);
 app.use("/api/facility-closures", facilityClosuresRouter);
 
-// 外部システム(AgriCamp等)向けAPI。x-api-keyヘッダによる認証が必須。
-app.use("/api/external", apiKeyAuth, externalRouter);
+// 外部システム(AgriCamp・送迎プラン作成サポート等)向けAPI。x-api-keyヘッダによる
+// 認証が必須(エンドポイントごとに使う環境変数が異なる。認証はexternalRouter内で
+// エンドポイントごとに適用する。2026-09-16改訂)。
+app.use("/api/external", externalRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3011;
 app.listen(port, () => {
