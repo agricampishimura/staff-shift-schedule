@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { isFacilityOperatingDay } from "../operatingDays.js";
+import { exportShiftExcel } from "../excelExport.js";
 
 export const shiftAssignmentsRouter = Router();
 
@@ -308,6 +309,26 @@ shiftAssignmentsRouter.post("/confirm-month", async (req, res) => {
   });
 
   res.json({ confirmedCount: toConfirm.length, removedCount: pendingRemovals.length });
+});
+
+// POST /api/shift-assignments/export-excel?month=YYYY-MM
+// 確定済みのシフトをExcelファイル(storage/exports/新シフト表_<年>.xlsx)に書き出す。
+// 年ごとに1ファイルとし、月次確定のたびに「<年>年<月>月全体」「<年>年<月>月内訳」の
+// 2シートを追加する(同じ月を再度実行した場合は既存シートを置き換える)。
+shiftAssignmentsRouter.post("/export-excel", async (req, res) => {
+  const { month } = req.query;
+  if (!month) {
+    res.status(400).json({ error: "month (YYYY-MM) is required" });
+    return;
+  }
+
+  const { buffer, filename } = await exportShiftExcel(String(month));
+  // filename=部分はヘッダーに直接置けないマルチバイト文字を含むため使わず(Node.jsが
+  // ERR_INVALID_CHARで拒否する)、ASCIIのダミー名+filename*(RFC 5987)のみで指定する。
+  const encoded = encodeURIComponent(filename);
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", `attachment; filename="shift-table.xlsx"; filename*=UTF-8''${encoded}`);
+  res.send(buffer);
 });
 
 shiftAssignmentsRouter.get("/", async (req, res) => {

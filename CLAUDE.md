@@ -8,6 +8,7 @@
 
 - **要件定義の正本(v0.1ドラフト)**: [docs/requirements-v0.1-draft.md](docs/requirements-v0.1-draft.md)。ヒアリング未実施の項目は「未確定」と明記してある。以後の仕様変更はまずこのファイルを更新する。
 - **経緯・スコープ決定の記録**: [docs/decisions/2026-09-07-project-kickoff.md](docs/decisions/2026-09-07-project-kickoff.md)。
+- [docs/decisions/2026-09-16-confirmed-shift-excel-export.md](docs/decisions/2026-09-16-confirmed-shift-excel-export.md) — シフト確定時のExcel出力(全体/内訳2シート)、共有ドライブ(`Z:\アソシエイト共有書類\全員出勤表\シフト表`)への保存、編集制限パスワード(シート保護)。
 
 ## 経緯(重要)
 

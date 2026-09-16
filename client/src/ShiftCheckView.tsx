@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api } from "./api";
+import { api, postDownload, saveBlobAsFile } from "./api";
 import { ShiftCheckDayDetail } from "./ShiftCheckDayDetail";
 import { clearShiftCheckProgress, saveShiftCheckProgress } from "./shiftCheckProgress";
 import {
@@ -47,6 +47,8 @@ export function ShiftCheckView({
   const [assignments, setAssignments] = useState<ShiftAssignment[]>([]);
   const [generateInfo, setGenerateInfo] = useState<GenerateShiftAssignmentsResult | null>(null);
   const [confirmInfo, setConfirmInfo] = useState<ConfirmMonthResult | null>(null);
+  const [exportedFilename, setExportedFilename] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [checkResult, setCheckResult] = useState<ShiftCheckResult | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(initialSelectedDay);
   const [loading, setLoading] = useState(false);
@@ -135,12 +137,25 @@ export function ShiftCheckView({
     )
       return;
     setLoading(true);
+    setExportedFilename(null);
+    setExportError(null);
     try {
       const result = await api.post<ConfirmMonthResult>(`/shift-assignments/confirm-month?month=${month}`, {});
       setConfirmInfo(result);
       await Promise.all([loadAssignments(), loadDaySchedules(), refreshCheck()]);
       // 確定後はもう「作成途中」ではないため、復帰用の保存内容をクリアする(2026-09-12追加)。
       clearShiftCheckProgress();
+
+      // 確定したシフトをExcelファイルとして書き出し、そのままダウンロードする
+      // (2026-09-16追加。出力先: storage/exports/新シフト表_<年>.xlsx)。
+      try {
+        const { blob, filename } = await postDownload(`/shift-assignments/export-excel?month=${month}`);
+        saveBlobAsFile(blob, filename);
+        setExportedFilename(filename);
+      } catch (err) {
+        setExportError(err instanceof Error ? err.message : String(err));
+      }
+
       onConfirmed?.();
     } finally {
       setLoading(false);
@@ -186,6 +201,18 @@ export function ShiftCheckView({
       {confirmInfo && (
         <p className="hint">
           {confirmInfo.confirmedCount}件の配置を確定し、{confirmInfo.removedCount}件の削除保留分を実際に削除しました。
+        </p>
+      )}
+
+      {exportedFilename && (
+        <p className="hint">
+          シフト表(Excel)「{exportedFilename}」をダウンロードし、共有ドライブ(アソシエイト共有書類\全員出勤表\シフト表)にも保存しました。
+          編集にはパスワードが必要です(閲覧は誰でも可能)。ファイルを開いて印刷・保存してください。
+        </p>
+      )}
+      {exportError && (
+        <p className="hint shift-check-warning-text">
+          シフト確定は完了しましたが、Excelファイルの出力に失敗しました: {exportError}
         </p>
       )}
 
